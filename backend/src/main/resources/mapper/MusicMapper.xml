@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sakuraverse.backend.mapper.MusicMapper">
+
+    <resultMap id="MusicResultMap" type="com.sakuraverse.backend.entity.MusicTrack">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="artist" column="artist"/>
+        <result property="url" column="url"/>
+        <result property="coverUrl" column="cover_url"/>
+        <result property="contentType" column="content_type"/>
+        <result property="createTime" column="create_time"/>
+        <!-- fileData is lazy loaded or fetched specifically via selectById -->
+    </resultMap>
+
+    <resultMap id="MusicDetailMap" extends="MusicResultMap" type="com.sakuraverse.backend.entity.MusicTrack">
+        <result property="fileData" column="file_data" typeHandler="org.apache.ibatis.type.BlobTypeHandler"/>
+    </resultMap>
+
+    <!-- CRITICAL: Do NOT select file_data here to avoid OOM -->
+    <select id="selectAll" resultMap="MusicResultMap">
+        SELECT id, title, artist, url, cover_url, content_type, create_time 
+        FROM blog_music 
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectById" resultMap="MusicDetailMap">
+        SELECT * FROM blog_music WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO blog_music (title, artist, url, content_type, file_data, cover_url, create_time)
+        VALUES (#{title}, #{artist}, #{url}, #{contentType}, #{fileData}, #{coverUrl}, NOW())
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM blog_music WHERE id = #{id}
+    </delete>
+
+</mapper>

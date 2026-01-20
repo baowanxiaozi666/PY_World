@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PangYan's World | My Personal Blog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@300;400;500;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        /* 暗黑（深海）— 让 “sakura/:root” 对应暗黑风格 */
+        --color-bg: #051821;
+        --color-text: #D7F6FF;
+        --color-accent: #4BE6FF;       /* 冷青光 */
+        --color-secondary: #6F7BFF;    /* 冷紫 */
+        --color-card-bg: rgba(2, 12, 18, 0.72);
+
+        /* 覆盖层默认关闭：让视频原色直接透出 */
+        --bg-overlay: rgba(0, 0, 0, 0);
+
+        /* Gradient Fallback（Deep Ocean） */
+        --bg-gradient-start: #03131B;
+        --bg-gradient-end: #062F4A;
+
+        /* Video Appearance：暗黑模式下调低亮度 */
+        --video-opacity: 1;
+        --video-filter: saturate(0.95) contrast(1.05) brightness(0.5);
+
+        /* Cursor Colors (Pink/White) */
+        --cursor-default: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg transform='rotate(-10 16 16)'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23FFFFFF' stroke='%23FFB7C5' stroke-width='2'/%3E%3Cellipse cx='16' cy='19' rx='5.5' ry='4.5' fill='%23FFB7C5'/%3E%3Ccircle cx='7.5' cy='11' r='2.5' fill='%23FFB7C5'/%3E%3Ccircle cx='12.5' cy='6.5' r='3' fill='%23FFB7C5'/%3E%3Ccircle cx='19.5' cy='6.5' r='3' fill='%23FFB7C5'/%3E%3Ccircle cx='24.5' cy='11' r='2.5' fill='%23FFB7C5'/%3E%3C/g%3E%3C/svg%3E") 16 16, auto;
+        --cursor-pointer: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg transform='rotate(-10 16 16)'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23FB7185' stroke='%23FFFFFF' stroke-width='2'/%3E%3Cellipse cx='16' cy='19' rx='5.5' ry='4.5' fill='%23FFFFFF'/%3E%3Ccircle cx='7.5' cy='11' r='2.5' fill='%23FFFFFF'/%3E%3Ccircle cx='12.5' cy='6.5' r='3' fill='%23FFFFFF'/%3E%3Ccircle cx='19.5' cy='6.5' r='3' fill='%23FFFFFF'/%3E%3Ccircle cx='24.5' cy='11' r='2.5' fill='%23FFFFFF'/%3E%3C/g%3E%3C/svg%3E") 16 16, pointer;
+      }
+
+      [data-theme="cyber"] {
+        /* 明亮（海蓝）— 让 “cyber” 对应明亮风格 */
+        --color-bg: #EAFBFF;
+        --color-text: #06222C;          /* 深海墨蓝，保证可读性 */
+        --color-accent: #2FD3FF;        /* 青蓝荧光 */
+        --color-secondary: #5B7CFF;     /* 冷紫点缀 */
+        --color-card-bg: rgba(255, 255, 255, 0.62);
+        --bg-overlay: rgba(0, 0, 0, 0);
+
+        /* Background Gradient Fallback（海蓝明亮） */
+        --bg-gradient-start: #A6EEFF;
+        --bg-gradient-end: #2DA8FF;
+
+        /* Video Appearance */
+        --video-opacity: 1;
+        --video-filter: saturate(1.1) contrast(1.05);
+
+        /* Cursor Colors (Purple/Cyan) */
+        --cursor-default: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg transform='rotate(-10 16 16)'%3E%3Ccircle cx='16' cy='16' r='13' fill='%231e293b' stroke='%238b5cf6' stroke-width='2'/%3E%3Cellipse cx='16' cy='19' rx='5.5' ry='4.5' fill='%238b5cf6'/%3E%3Ccircle cx='7.5' cy='11' r='2.5' fill='%2306b6d4'/%3E%3Ccircle cx='12.5' cy='6.5' r='3' fill='%2306b6d4'/%3E%3Ccircle cx='19.5' cy='6.5' r='3' fill='%2306b6d4'/%3E%3Ccircle cx='24.5' cy='11' r='2.5' fill='%2306b6d4'/%3E%3C/g%3E%3C/svg%3E") 16 16, auto;
+        --cursor-pointer: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg transform='rotate(-10 16 16)'%3E%3Ccircle cx='16' cy='16' r='13' fill='%238b5cf6' stroke='%23ffffff' stroke-width='2'/%3E%3Cellipse cx='16' cy='19' rx='5.5' ry='4.5' fill='%23ffffff'/%3E%3Ccircle cx='7.5' cy='11' r='2.5' fill='%23ffffff'/%3E%3Ccircle cx='12.5' cy='6.5' r='3' fill='%23ffffff'/%3E%3Ccircle cx='19.5' cy='6.5' r='3' fill='%23ffffff'/%3E%3Ccircle cx='24.5' cy='11' r='2.5' fill='%23ffffff'/%3E%3C/g%3E%3C/svg%3E") 16 16, pointer;
+      }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        /* Dynamic Gradient based on theme */
+        background: linear-gradient(to bottom, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+        background-attachment: fixed;
+        transition: background 0.5s ease;
+      }
+
+      body {
+        color: var(--color-text);
+        transition: color 0.5s ease;
+        position: relative;
+        overflow-x: hidden;
+        cursor: var(--cursor-default);
+      }
+
+      a, button, [role="button"], input, select, textarea {
+        cursor: var(--cursor-pointer);
+      }
+
+      /* Fixed Video Background */
+      #bg-video {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        /* 不要用负 z-index，可能会被放到 body 背景“后面”导致完全不可见 */
+        z-index: 0;
+        object-fit: cover;
+        pointer-events: none;
+        
+        /* Theming Transitions */
+        opacity: var(--video-opacity);
+        filter: var(--video-filter);
+        transition: opacity 1s ease, filter 1s ease;
+      }
+
+      /* Overlay */
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--bg-overlay);
+        /* 覆盖层在视频上方、内容下方 */
+        z-index: 1;
+        transition: background-color 0.5s ease;
+        pointer-events: none;
+      }
+      
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--color-accent); 
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--color-secondary); 
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"M PLUS Rounded 1c"', '"Quicksand"', 'sans-serif'],
+              body: ['"Quicksand"', 'sans-serif'],
+            },
+            colors: {
+              anime: {
+                bg: 'var(--color-bg)',
+                text: 'var(--color-text)',
+                accent: 'var(--color-accent)',
+                secondary: 'var(--color-secondary)',
+                card: 'var(--color-card-bg)',
+              }
+            },
+            animation: {
+              'float': 'float 3s ease-in-out infinite',
+              'bounce-slow': 'bounce 3s infinite',
+              'drift': 'drift 20s linear infinite',
+              'drift-slow': 'drift 30s linear infinite',
+              'drift-slower': 'drift 40s linear infinite',
+              'fade-in-up': 'fadeInUp 1s ease-out',
+              'spin-slow': 'spin 8s linear infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-10px)' },
+              },
+              drift: {
+                '0%': { transform: 'translateX(-20vw)', opacity: '0' },
+                '10%': { opacity: '1' },
+                '90%': { opacity: '1' },
+                '100%': { transform: 'translateX(100vw)', opacity: '0' },
+              },
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <!-- 使用 Vite + 本地 node_modules 解析依赖；不要在 Vite 项目里再用 importmap 覆盖模块解析 -->
+    <link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <!-- 
+       VIDEO FIX:
+       1. Replaced with a stable Pixabay CDN URL (Blue Sky Clouds) that supports hotlinking better than the previous one.
+       2. Added 'poster' image for immediate visual feedback before video loads.
+    -->
+    <!-- 使用本地视频作为背景：从 Vite 的 public 目录加载 /anime-bg.mp4 -->
+    <video autoplay muted loop playsinline id="bg-video" poster="">
+        <source src="/anime-bg.mp4" type="video/mp4">
+        Your browser does not support HTML5 video.
+    </video>
+
+    <!-- Auto-play handling -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const video = document.getElementById('bg-video');
+            if (video) {
+                // Try to play immediately
+                const playPromise = video.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Auto-play was prevented. Waiting for user interaction.");
+                        // Add a one-time click listener to the body to start video
+                        document.body.addEventListener('click', () => {
+                            video.play();
+                        }, { once: true });
+                    });
+                }
+
+                // 一旦视频可以播放，去掉纯色渐变背景，让视频真正成为主背景
+                video.addEventListener('loadeddata', () => {
+                    // 移除 body 上的渐变背景，让视频更清晰
+                    document.body.style.background = 'none';
+                    // 完全去掉覆盖层，避免任何“白膜/黑膜”
+                    document.documentElement.style.setProperty('--bg-overlay', 'rgba(0,0,0,0)');
+                });
+                
+                // If video fails to load entirely, hide it so the CSS gradient background shows
+                video.addEventListener('error', (e) => {
+                   console.warn("Video failed to load, falling back to CSS Anime Sky Gradient.");
+                   video.style.opacity = '0'; // Smoothly fade out or hide
+                   setTimeout(() => { video.style.display = 'none'; }, 1000);
+                }, true);
+            }
+        });
+    </script>
+
+    <div id="root"></div>
+    <!-- 通过 Vite 加载单一入口脚本 -->
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>

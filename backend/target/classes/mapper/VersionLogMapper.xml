@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sakuraverse.backend.mapper.VersionLogMapper">
+
+    <resultMap id="VersionResultMap" type="com.sakuraverse.backend.entity.VersionLog">
+        <id property="id" column="id"/>
+        <result property="version" column="version"/>
+        <result property="content" column="content"/>
+        <result property="releaseDate" column="release_date"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="selectAll" resultMap="VersionResultMap">
+        SELECT * FROM sys_version_log ORDER BY release_date DESC, id DESC
+    </select>
+
+    <insert id="insert">
+        INSERT INTO sys_version_log (version, content, release_date, create_time)
+        VALUES (#{version}, #{content}, #{releaseDate}, NOW())
+    </insert>
+    
+    <update id="update">
+        UPDATE sys_version_log
+        SET version = #{version}, content = #{content}, release_date = #{releaseDate}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM sys_version_log WHERE id = #{id}
+    </delete>
+
+</mapper>

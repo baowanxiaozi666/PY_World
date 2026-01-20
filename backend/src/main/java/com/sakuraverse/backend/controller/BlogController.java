@@ -111,4 +111,11 @@ public class BlogController {
         blogService.deletePost(id);
         return Result.success();
     }
+    
+    @DeleteMapping("/admin/tags/{name}")
+    @LoginRequired
+    public Result<Void> deleteTag(@PathVariable String name) {
+        blogService.deleteTag(name);
+        return Result.success();
+    }
 }

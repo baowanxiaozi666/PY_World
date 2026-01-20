@@ -403,9 +403,56 @@ const App: React.FC = () => {
       }
   };
 
-  const handleDeleteTag = (tagToDelete: string) => {
-    setTags(tags.filter(t => t !== tagToDelete));
-    if (selectedTag === tagToDelete) setSelectedTag(null);
+  const handleDeleteTag = async (tagToDelete: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert("You must be logged in!");
+      return;
+    }
+    
+    if (token === 'offline-demo-token') {
+      // Offline mode: just update local state
+      setTags(tags.filter(t => t !== tagToDelete));
+      if (selectedTag === tagToDelete) setSelectedTag(null);
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/admin/tags/${encodeURIComponent(tagToDelete)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        // Refresh tags after successful deletion
+        const res = await response.json();
+        if (res.code === 200) {
+          // Fetch updated tags list
+          try {
+            const tagsResponse = await fetch('/api/tags');
+            if (tagsResponse.ok) {
+              const tagsRes = await tagsResponse.json();
+              if (tagsRes.code === 200) {
+                setTags(tagsRes.data);
+              }
+            }
+          } catch (e) {
+            console.log("Backend offline, using local tags");
+          }
+          
+          if (selectedTag === tagToDelete) setSelectedTag(null);
+        } else {
+          alert(res.message || "Failed to delete tag");
+        }
+      } else {
+        alert("Failed to delete tag");
+      }
+    } catch (e) {
+      console.error("Error deleting tag", e);
+      alert("Network error. Backend seems offline.");
+    }
   };
 
   // Helper: 当前我们让 sakura = 暗黑深海主题，cyber = 明亮天蓝主题
@@ -543,7 +590,11 @@ const App: React.FC = () => {
                    <div className="text-center py-20 bg-anime-card rounded-2xl border border-anime-text/5">
                      <p className="text-anime-text/50 text-lg">No posts found in this dimension... (｡•́︿•̀｡)</p>
                      <button 
-                       onClick={() => { setSelectedTag(null); setSearchQuery(''); }} 
+                       onClick={() => { 
+                           setSelectedTag(null); 
+                           setSearchQuery(''); 
+                           fetchPosts(); 
+                       }} 
                        className="text-anime-accent mt-2 hover:underline"
                      >
                        Clear Filters

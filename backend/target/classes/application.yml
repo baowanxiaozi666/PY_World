@@ -14,20 +14,20 @@ spring:
       mode: always
       encoding: UTF-8
 
-  data:
-    redis:
+
+  redis:
       host: 127.0.0.1
       port: 6379
       database: 0
       password: 123456
     
-    elasticsearch:
+  elasticsearch:
       uris: http://localhost:9200
 
   servlet:
     multipart:
-      max-file-size: 50MB
-      max-request-size: 50MB
+      max-file-size: 200MB
+      max-request-size: 200MB
 
 # DeepSeek / AI Configuration
 deepseek:

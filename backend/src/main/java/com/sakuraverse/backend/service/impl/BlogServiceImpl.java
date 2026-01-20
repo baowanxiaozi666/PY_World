@@ -421,4 +421,48 @@ public class BlogServiceImpl implements BlogService {
         }
         redisTemplate.delete("tags:all");
     }
+    
+    @Override
+    @Transactional
+    public void deleteTag(String name) {
+        // Get all posts with this tag
+        List<BlogPost> postsWithTag = blogMapper.selectPosts(name, null, "latest");
+        
+        // Remove the tag from each post
+        for (BlogPost post : postsWithTag) {
+            List<String> tags = post.getTags();
+            if (tags != null && tags.contains(name)) {
+                tags.remove(name);
+                // Update the post without the deleted tag
+                blogMapper.deletePostTags(post.getId());
+                if (!tags.isEmpty()) {
+                    for (String tagName : tags) {
+                        Long tagId = blogMapper.getTagIdByName(tagName);
+                        if (tagId == null) {
+                            blogMapper.insertTag(tagName);
+                            tagId = blogMapper.getTagIdByName(tagName);
+                        }
+                        blogMapper.insertPostTag(post.getId(), tagId);
+                    }
+                }
+                
+                // Update post in Elasticsearch
+                try {
+                    PostDocument doc = elasticsearchOperations.get(String.valueOf(post.getId()), PostDocument.class);
+                    if (doc != null) {
+                        doc.setTags(tags.toArray(new String[0]));
+                        elasticsearchOperations.save(doc);
+                    }
+                } catch (Exception e) {
+                    log.error("ES Update failed when removing tag: {}", e.getMessage());
+                }
+            }
+        }
+        
+        // Delete the tag itself
+        blogMapper.deleteTagByName(name);
+        
+        // Clear caches
+        clearCaches(null);
+    }
 }

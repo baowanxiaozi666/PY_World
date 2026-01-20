@@ -46,4 +46,6 @@ public interface BlogMapper {
     Long getCategoryIdByName(@Param("name") String name);
     
     void insertCategory(@Param("name") String name);
+    
+    void deleteTagByName(@Param("name") String name);
 }

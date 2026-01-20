@@ -174,5 +174,9 @@
     <insert id="insertCategory">
         INSERT IGNORE INTO blog_category (name) VALUES (#{name})
     </insert>
+    
+    <delete id="deleteTagByName">
+        DELETE FROM blog_tag WHERE name = #{name}
+    </delete>
 
 </mapper>

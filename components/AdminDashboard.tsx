@@ -107,72 +107,72 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ posts: initialPosts, ta
     <div className="animate-fade-in max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-            <h2 className="text-3xl font-bold text-anime-text flex items-center gap-3">
-                <LayoutDashboard className="text-anime-accent" /> 
-                Admin Dashboard
-            </h2>
-            <p className="text-anime-text/60 mt-1">Manage your world content from here.</p>
+          <h2 className="text-3xl font-bold text-anime-text flex items-center gap-3">
+            <LayoutDashboard className="text-anime-accent" /> 
+            Admin Dashboard
+          </h2>
+          <p className="text-anime-text/60 mt-1">Manage your world content from here.</p>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
-             {onManageVersions && (
-                <button 
-                  onClick={onManageVersions}
-                  className="bg-white text-anime-text border border-anime-accent/20 px-4 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-anime-bg transition-all flex items-center gap-2"
-                >
-                  <History size={20} className="text-anime-secondary" /> Timeline
-                </button>
-             )}
-             {onManageMusic && (
-                <button 
-                  onClick={onManageMusic}
-                  className="bg-white text-anime-text border border-anime-accent/20 px-4 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-anime-bg transition-all flex items-center gap-2"
-                >
-                  <Music size={20} className="text-anime-secondary" /> Music
-                </button>
-             )}
-             {onEditProfile && (
-                <button 
-                  onClick={onEditProfile}
-                  className="bg-white text-anime-text border border-anime-accent/20 px-4 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-anime-bg transition-all flex items-center gap-2"
-                >
-                  <UserCog size={20} className="text-anime-secondary" /> Profile
-                </button>
-             )}
-            <button 
-              onClick={onCreate}
-              className="bg-anime-accent text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-anime-accent/30 hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
-            >
-              <Plus size={20} /> New Post
-            </button>
+        {onManageVersions && (
+          <button 
+            onClick={onManageVersions}
+            className="bg-anime-card text-anime-text border border-anime-accent/30 px-4 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-anime-bg transition-all flex items-center gap-2"
+          >
+            <History size={20} className="text-anime-secondary" /> Timeline
+          </button>
+        )}
+        {onManageMusic && (
+          <button 
+            onClick={onManageMusic}
+            className="bg-anime-card text-anime-text border border-anime-accent/30 px-4 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-anime-bg transition-all flex items-center gap-2"
+          >
+            <Music size={20} className="text-anime-secondary" /> Music
+          </button>
+        )}
+        {onEditProfile && (
+          <button 
+            onClick={onEditProfile}
+            className="bg-anime-card text-anime-text border border-anime-accent/30 px-4 py-3 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-anime-bg transition-all flex items-center gap-2"
+          >
+            <UserCog size={20} className="text-anime-secondary" /> Profile
+          </button>
+        )}
+        <button 
+          onClick={onCreate}
+          className="bg-anime-accent text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-anime-accent/30 hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
+        >
+          <Plus size={20} /> New Post
+        </button>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white/60 backdrop-blur-md p-6 rounded-2xl border border-anime-text/10 shadow-sm flex items-center gap-4">
+        <div className="bg-anime-card backdrop-blur-md p-6 rounded-2xl border border-anime-text/10 shadow-sm flex items-center gap-4">
             <div className="p-4 bg-blue-100 text-blue-500 rounded-full">
                 <FileText size={24} />
             </div>
             <div>
-                <p className="text-sm text-gray-500 font-bold">Total Posts</p>
+                <p className="text-sm text-anime-text/70 font-bold">Total Posts</p>
                 <h3 className="text-2xl font-bold text-anime-text">{localPosts.length}</h3>
             </div>
         </div>
-        <div className="bg-white/60 backdrop-blur-md p-6 rounded-2xl border border-anime-text/10 shadow-sm flex items-center gap-4">
+        <div className="bg-anime-card backdrop-blur-md p-6 rounded-2xl border border-anime-text/10 shadow-sm flex items-center gap-4">
             <div className="p-4 bg-pink-100 text-pink-500 rounded-full">
                 <Heart size={24} />
             </div>
             <div>
-                <p className="text-sm text-gray-500 font-bold">Total Likes</p>
+                <p className="text-sm text-anime-text/70 font-bold">Total Likes</p>
                 <h3 className="text-2xl font-bold text-anime-text">{totalLikes}</h3>
             </div>
         </div>
-        <div className="bg-white/60 backdrop-blur-md p-6 rounded-2xl border border-anime-text/10 shadow-sm flex items-center gap-4">
+        <div className="bg-anime-card backdrop-blur-md p-6 rounded-2xl border border-anime-text/10 shadow-sm flex items-center gap-4">
             <div className="p-4 bg-purple-100 text-purple-500 rounded-full">
                 <MessageSquare size={24} />
             </div>
             <div>
-                <p className="text-sm text-gray-500 font-bold">Total Comments</p>
+                <p className="text-sm text-anime-text/70 font-bold">Total Comments</p>
                 <h3 className="text-2xl font-bold text-anime-text">{totalComments}</h3>
             </div>
         </div>

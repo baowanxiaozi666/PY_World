@@ -16,4 +16,5 @@ public interface BlogService {
     List<String> getAllTags();
     void savePost(BlogPost post);
     void deletePost(Long id);
+    void deleteTag(String name);
 }

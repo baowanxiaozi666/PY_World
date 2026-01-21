@@ -445,14 +445,17 @@ const App: React.FC = () => {
           });
           
           if (response.ok) {
-              setAboutProfile(profile);
+              // Re-fetch from server to ensure complete synchronization with database
+              await fetchProfile();
               setActivePage(Page.ADMIN_DASHBOARD);
+              alert("Profile updated successfully!");
           } else {
-              alert("Failed to update profile");
+              const errorData = await response.json().catch(() => ({}));
+              alert(`Failed to update profile: ${errorData.message || 'Unknown error'}`);
           }
       } catch (e) {
           console.error("Error updating profile", e);
-          alert("Network error");
+          alert("Network error: " + (e instanceof Error ? e.message : 'Unknown error'));
       }
   };
 

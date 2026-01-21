@@ -46,7 +46,7 @@ root.render(
   <React.StrictMode>
     {/* 兜底：如果 App 运行时报错，至少在页面上显示错误信息（避免“只有背景啥也没有”） */}
     <ErrorBoundary>
-      <App />
+    <App />
     </ErrorBoundary>
   </React.StrictMode>
 );

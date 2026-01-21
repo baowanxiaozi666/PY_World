@@ -21,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
@@ -386,7 +387,30 @@ public class BlogServiceImpl implements BlogService {
                 elasticsearchOperations.save(doc);
             }
         } catch (Exception e) {
-            log.error("Failed to sync likes to ES: {}", e.getMessage());
+            // ES connection/parsing issues - log as warning, not error, since this is async and non-critical
+            String errorMsg = e.getMessage();
+            String errorClass = e.getClass().getSimpleName();
+            
+            if (errorMsg != null) {
+                if (errorMsg.contains("index_not_found_exception") || 
+                    errorMsg.contains("Index") && errorMsg.contains("not found")) {
+                    // Index doesn't exist yet - this is OK, will be created when post is saved
+                    log.debug("ES index not found for post {}, skipping likes sync (index will be created on next post save)", id);
+                } else if (errorMsg.contains("Unsupported Content-Type") || 
+                    errorMsg.contains("Failed to parse") ||
+                    errorMsg.contains("Unable to parse response body")) {
+                    log.warn("ES response parsing failed for post {} (ES version may be incompatible): {}", id, 
+                            errorMsg.length() > 150 ? errorMsg.substring(0, 150) + "..." : errorMsg);
+                } else if (errorMsg.contains("Connection refused") ||
+                           errorMsg.contains("NoNodeAvailableException")) {
+                    log.warn("ES unavailable, skipping likes sync for post {}: Connection error", id);
+                } else {
+                    log.warn("ES sync failed for post {}: {}", id, 
+                            errorMsg.length() > 150 ? errorMsg.substring(0, 150) + "..." : errorMsg);
+                }
+            } else {
+                log.warn("ES sync failed for post {}: {} (no error message)", id, errorClass);
+            }
         }
     }
 
@@ -488,7 +512,49 @@ public class BlogServiceImpl implements BlogService {
             
             elasticsearchOperations.save(doc);
         } catch (Exception e) {
-            log.error("ES Update failed: {}", e.getMessage());
+            // ES connection/parsing issues - log as warning, not error, since ES is optional
+            String errorMsg = e.getMessage();
+            if (errorMsg != null) {
+                if (errorMsg.contains("index_not_found_exception") || 
+                    (errorMsg.contains("Index") && errorMsg.contains("not found"))) {
+                    // Index doesn't exist - try to create it and save again
+                    try {
+                        IndexOperations indexOps = elasticsearchOperations.indexOps(PostDocument.class);
+                        if (!indexOps.exists()) {
+                            indexOps.create();
+                            log.info("Created ES index 'blog_posts'");
+                        }
+                        // Retry saving after ensuring index exists
+                        PostDocument retryDoc = new PostDocument();
+                        retryDoc.setId(post.getId());
+                        retryDoc.setTitle(post.getTitle());
+                        retryDoc.setExcerpt(post.getExcerpt());
+                        retryDoc.setContent(post.getContent());
+                        retryDoc.setCategory(post.getCategory());
+                        retryDoc.setTags(post.getTags().toArray(new String[0]));
+                        retryDoc.setLikes(post.getLikes() == null ? 0 : post.getLikes());
+                        retryDoc.setCreateTime(post.getDate() == null ? new Date() : post.getDate());
+                        elasticsearchOperations.save(retryDoc);
+                        log.debug("Successfully saved post {} to ES after creating index", post.getId());
+                    } catch (Exception retryEx) {
+                        log.warn("ES index creation/save failed for post {}: {}", post.getId(), 
+                                retryEx.getMessage() != null && retryEx.getMessage().length() > 150 ? 
+                                retryEx.getMessage().substring(0, 150) + "..." : 
+                                (retryEx.getMessage() != null ? retryEx.getMessage() : retryEx.getClass().getSimpleName()));
+                    }
+                } else if (errorMsg.contains("Unsupported Content-Type") || 
+                    errorMsg.contains("Failed to parse") ||
+                    errorMsg.contains("Unable to parse response body")) {
+                    log.warn("ES response parsing failed (ES version may be incompatible): {}", 
+                            errorMsg.length() > 150 ? errorMsg.substring(0, 150) + "..." : errorMsg);
+                } else if (errorMsg.contains("Connection refused")) {
+                    log.warn("ES unavailable, skipping post sync: ES service not running or misconfigured");
+                } else {
+                    log.warn("ES Update failed: {}", errorMsg.length() > 150 ? errorMsg.substring(0, 150) + "..." : errorMsg);
+                }
+            } else {
+                log.warn("ES Update failed: {} (no error message)", e.getClass().getSimpleName());
+            }
         }
         
         clearCaches(post.getId());
@@ -504,7 +570,15 @@ public class BlogServiceImpl implements BlogService {
         try {
             elasticsearchOperations.delete(String.valueOf(id), PostDocument.class);
         } catch (Exception e) {
-            log.error("ES Delete failed: {}", e.getMessage());
+            // ES connection/parsing issues - log as warning, not error
+            String errorMsg = e.getMessage();
+            if (errorMsg != null && (errorMsg.contains("Unable to parse response body") ||
+                                     errorMsg.contains("Failed to parse"))) {
+                log.warn("ES response parsing failed, skipping delete sync: {}", 
+                        errorMsg.length() > 100 ? errorMsg.substring(0, 100) + "..." : errorMsg);
+            } else {
+                log.warn("ES unavailable, skipping delete sync: {}", errorMsg != null ? errorMsg : e.getClass().getSimpleName());
+            }
         }
         
         clearCaches(id);
@@ -553,7 +627,16 @@ public class BlogServiceImpl implements BlogService {
                         elasticsearchOperations.save(doc);
                     }
                 } catch (Exception e) {
-                    log.error("ES Update failed when removing tag: {}", e.getMessage());
+                    // ES connection/parsing issues - log as warning, not error
+                    String errorMsg = e.getMessage();
+                    if (errorMsg != null && (errorMsg.contains("Unable to parse response body") ||
+                                             errorMsg.contains("Failed to parse"))) {
+                        log.warn("ES response parsing failed, skipping tag update sync: {}", 
+                                errorMsg.length() > 100 ? errorMsg.substring(0, 100) + "..." : errorMsg);
+                    } else {
+                        log.warn("ES unavailable, skipping tag update sync: {}", 
+                                errorMsg != null ? errorMsg : e.getClass().getSimpleName());
+                    }
                 }
             }
         }

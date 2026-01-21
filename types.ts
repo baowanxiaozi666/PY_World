@@ -4,6 +4,8 @@ export interface Comment {
   author: string;
   content: string;
   date: string;
+  parentId?: number | null;
+  replies?: Comment[];
 }
 
 export interface BlogPost {

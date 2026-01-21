@@ -60,17 +60,8 @@ const MusicManager: React.FC<MusicManagerProps> = ({ onBack }) => {
     setIsLoading(true);
     const token = localStorage.getItem('token');
 
-    // Demo mode handling
-    if (token === 'offline-demo-token') {
-        const track = { 
-            id: Date.now(),
-            title,
-            artist,
-            coverUrl,
-            url: 'blob:https://demo/music.mp3'
-        };
-        setPlaylist([track, ...playlist]);
-        resetForm();
+    if (!token) {
+        alert("You must be logged in to add music!");
         setIsLoading(false);
         return;
     }
@@ -119,9 +110,9 @@ const MusicManager: React.FC<MusicManagerProps> = ({ onBack }) => {
     
     const token = localStorage.getItem('token');
     
-    if (token === 'offline-demo-token') {
-        setPlaylist(playlist.filter(t => t.id !== id));
-        return;
+    if (!token) {
+      alert("You must be logged in to delete music!");
+      return;
     }
 
     try {
@@ -133,12 +124,20 @@ const MusicManager: React.FC<MusicManagerProps> = ({ onBack }) => {
       });
 
       if (response.ok) {
-        setPlaylist(playlist.filter(t => t.id !== id));
+        const res = await response.json();
+        if (res.code === 200) {
+          // 重新获取列表，确保数据一致性
+          await fetchMusic();
+        } else {
+          alert(res.message || "Failed to delete music");
+        }
       } else {
-        alert("Failed to delete");
+        const res = await response.json().catch(() => ({ message: "Unknown error" }));
+        alert(res.message || `Failed to delete (Status: ${response.status})`);
       }
     } catch (e) {
-      alert("Network error");
+      console.error("Delete music error:", e);
+      alert("Network error: " + (e instanceof Error ? e.message : "Unknown error"));
     }
   };
 
@@ -165,7 +164,7 @@ const MusicManager: React.FC<MusicManagerProps> = ({ onBack }) => {
               {/* File Upload Area */}
               <div className="space-y-2">
                   <label className="text-sm font-bold text-anime-text/80 block">Music File (MP3)</label>
-                  <div className={`relative border-2 border-dashed rounded-xl p-4 transition-colors ${selectedFile ? 'border-green-400 bg-green-50' : 'border-anime-text/20 hover:border-anime-accent hover:bg-white/50'}`}>
+                  <div className={`relative border-2 border-dashed rounded-xl p-4 transition-colors ${selectedFile ? 'border-anime-accent bg-anime-accent/10' : 'border-anime-text/20 hover:border-anime-accent hover:bg-anime-card/50'}`}>
                       <input 
                           type="file" 
                           accept="audio/*"
@@ -175,7 +174,7 @@ const MusicManager: React.FC<MusicManagerProps> = ({ onBack }) => {
                       />
                       <div className="flex flex-col items-center justify-center text-center">
                           {selectedFile ? (
-                              <Music className="text-green-500 mb-2" size={24} />
+                              <Music className="text-anime-accent mb-2" size={24} />
                           ) : (
                               <UploadCloud className="text-anime-text/40 mb-2" size={24} />
                           )}
@@ -183,7 +182,7 @@ const MusicManager: React.FC<MusicManagerProps> = ({ onBack }) => {
                           <p className="text-sm text-anime-text/70 font-medium">
                               {selectedFile ? "File Selected" : "Click to Upload MP3"}
                           </p>
-                          {selectedFile && <p className="text-xs text-green-600 mt-1 truncate max-w-full px-2">{selectedFile.name}</p>}
+                          {selectedFile && <p className="text-xs text-anime-accent mt-1 truncate max-w-full px-2">{selectedFile.name}</p>}
                       </div>
                   </div>
               </div>
@@ -194,7 +193,7 @@ const MusicManager: React.FC<MusicManagerProps> = ({ onBack }) => {
                     placeholder="Song Title"
                     value={title}
                     onChange={e => setTitle(e.target.value)}
-                    className="w-full bg-white/60 border border-anime-text/10 rounded-xl py-2 px-4 outline-none focus:ring-2 focus:ring-anime-accent/50"
+                    className="w-full bg-anime-card/60 border border-anime-text/10 rounded-xl py-2 px-4 outline-none focus:ring-2 focus:ring-anime-accent/50 text-anime-text"
                     required
                   />
               </div>
@@ -204,7 +203,7 @@ const MusicManager: React.FC<MusicManagerProps> = ({ onBack }) => {
                     placeholder="Artist"
                     value={artist}
                     onChange={e => setArtist(e.target.value)}
-                    className="w-full bg-white/60 border border-anime-text/10 rounded-xl py-2 px-4 outline-none focus:ring-2 focus:ring-anime-accent/50"
+                    className="w-full bg-anime-card/60 border border-anime-text/10 rounded-xl py-2 px-4 outline-none focus:ring-2 focus:ring-anime-accent/50 text-anime-text"
                     required
                   />
               </div>
@@ -218,7 +217,7 @@ const MusicManager: React.FC<MusicManagerProps> = ({ onBack }) => {
                   />
               </div>
               
-              <div className="text-xs text-anime-text/50 bg-yellow-50 p-2 rounded-lg border border-yellow-100">
+              <div className="text-xs text-anime-text/70 bg-anime-card/50 p-2 rounded-lg border border-anime-accent/20">
                   <span className="font-bold">Note:</span> Files are stored directly in the database. Large files may take longer to process.
               </div>
 
@@ -240,8 +239,8 @@ const MusicManager: React.FC<MusicManagerProps> = ({ onBack }) => {
                 </div>
             )}
             {playlist.map(track => (
-                <div key={track.id} className="bg-white/70 backdrop-blur-sm p-4 rounded-2xl flex items-center gap-4 border border-anime-text/5 shadow-sm hover:shadow-md transition-all group">
-                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0">
+                <div key={track.id} className="bg-anime-card/70 backdrop-blur-sm p-4 rounded-2xl flex items-center gap-4 border border-anime-text/5 shadow-sm hover:shadow-md transition-all group">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-anime-card shadow-sm shrink-0">
                         <img src={track.coverUrl || 'https://via.placeholder.com/50'} alt="cover" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-grow min-w-0">
@@ -253,7 +252,7 @@ const MusicManager: React.FC<MusicManagerProps> = ({ onBack }) => {
                     </a>
                     <button 
                         onClick={() => handleDelete(track.id!)}
-                        className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition-colors"
+                        className="text-red-400 hover:text-red-500 p-2 hover:bg-red-500/20 rounded-full transition-colors"
                     >
                         <Trash2 size={18} />
                     </button>

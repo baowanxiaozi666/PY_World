@@ -15,6 +15,8 @@ public interface BlogMapper {
 
     BlogPost selectPostDetail(@Param("id") Long id);
     
+    List<Comment> selectRepliesByParentId(@Param("parentId") Long parentId);
+    
     // Lightweight select for optimistic locking (id, likes, version only)
     BlogPost selectPostSimple(@Param("id") Long id);
 
@@ -22,6 +24,8 @@ public interface BlogMapper {
     int compareAndSetLikes(@Param("id") Long id, @Param("newLikes") Integer newLikes, @Param("oldVersion") Integer oldVersion);
 
     void insertComment(Comment comment);
+    
+    int deleteComment(@Param("id") Long id);
     
     List<String> selectAllTags();
     

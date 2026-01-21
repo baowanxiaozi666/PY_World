@@ -97,15 +97,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               </div>
             </div>
 
-            {/* Credential Hint */}
-            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-start gap-2">
-              <Info className="text-blue-500 shrink-0 mt-0.5" size={16} />
-              <div className="text-xs text-blue-600">
-                <span className="font-bold block mb-1">提示:</span>
-                Username: <code>Github_Name</code><br/>
-                Password: <code>pre_phone</code>
-              </div>
-            </div>
 
             {error && (
               <div className="flex items-center gap-2 text-red-500 text-sm text-center bg-red-100/50 p-2 rounded-lg border border-red-200 justify-center">

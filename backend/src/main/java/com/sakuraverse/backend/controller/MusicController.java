@@ -101,18 +101,36 @@ public class MusicController {
             @RequestParam("coverUrl") String coverUrl,
             @RequestParam("file") MultipartFile file) {
         
+        if (file == null || file.isEmpty()) {
+            return Result.error(400, "Music file is required");
+        }
+        
         try {
             musicService.addMusic(title, artist, coverUrl, file);
             return Result.success();
+        } catch (IllegalArgumentException e) {
+            return Result.error(400, e.getMessage());
         } catch (IOException e) {
             return Result.error(500, "Failed to store music file: " + e.getMessage());
+        } catch (Exception e) {
+            return Result.error(500, "Unexpected error: " + e.getMessage());
         }
     }
 
     // Admin: Delete Music
     @DeleteMapping("/admin/music/{id}")
     public Result<Void> deleteMusic(@PathVariable Long id) {
-        musicService.deleteMusic(id);
-        return Result.success();
+        if (id == null) {
+            return Result.error(400, "Music ID is required");
+        }
+        
+        try {
+            musicService.deleteMusic(id);
+            return Result.success();
+        } catch (IllegalArgumentException e) {
+            return Result.error(404, e.getMessage());
+        } catch (Exception e) {
+            return Result.error(500, "Failed to delete music: " + e.getMessage());
+        }
     }
 }

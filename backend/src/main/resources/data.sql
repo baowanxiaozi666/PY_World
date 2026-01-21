@@ -14,8 +14,7 @@ INSERT INTO `blog_category` (`name`) VALUES
 ('Design');
 
 -- Initial Tags
-INSERT INTO `blog_tag` (`name`) VALUES 
-('React'), 
+INSERT INTO `blog_tag` (`name`) VALUES
 ('Java'), 
 ('Spring Boot'), 
 ('Slice of Life'),
@@ -29,6 +28,3 @@ VALUES (1, 'The Developer', 'https://picsum.photos/400/400?random=10',
 'Slice of Life, Sci-Fi, Psychological');
 
 -- Initial Music Data
-INSERT INTO `blog_music` (`title`, `artist`, `url`, `cover_url`, `create_time`) VALUES
-('Sakura Beats', 'Lo-fi Girl', 'https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3', 'https://picsum.photos/200?random=100', NOW()),
-('Night Coding', 'Synthwave Boy', 'https://assets.mixkit.co/music/preview/mixkit-hip-hop-02-738.mp3', 'https://picsum.photos/200?random=101', NOW());

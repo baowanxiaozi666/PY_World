@@ -53,15 +53,30 @@ CREATE TABLE `blog_post_tag` (
   PRIMARY KEY (`post_id`,`tag_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- IP Username Mapping Table
+DROP TABLE IF EXISTS `sys_ip_username`;
+CREATE TABLE `sys_ip_username` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `ip_address` varchar(64) NOT NULL,
+  `username` varchar(64) NOT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `update_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_ip` (`ip_address`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Comment Table
 DROP TABLE IF EXISTS `blog_comment`;
 CREATE TABLE `blog_comment` (
   `comment_id` bigint NOT NULL AUTO_INCREMENT,
   `post_id` bigint NOT NULL,
+  `parent_comment_id` bigint DEFAULT NULL,
   `author_name` varchar(64) DEFAULT NULL,
   `content` varchar(1024) DEFAULT NULL,
   `create_time` datetime DEFAULT NULL,
-  PRIMARY KEY (`comment_id`)
+  PRIMARY KEY (`comment_id`),
+  KEY `idx_post_id` (`post_id`),
+  KEY `idx_parent_id` (`parent_comment_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- About Profile Table (Singleton pattern logic)

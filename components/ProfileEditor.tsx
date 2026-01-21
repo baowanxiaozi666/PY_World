@@ -206,7 +206,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ initialData, onSave, onCa
              </div>
              <div className="space-y-2">
                 <label className="text-sm font-bold text-anime-text/80 flex items-center gap-2">
-                  <Star size={16} /> Anime Taste (Comma separated)
+                  <Star size={16} /> Film & TV Enthusiast (Comma separated)
                 </label>
                 <input 
                   type="text" 

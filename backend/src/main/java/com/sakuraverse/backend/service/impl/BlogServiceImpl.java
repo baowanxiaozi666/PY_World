@@ -47,6 +47,9 @@ public class BlogServiceImpl implements BlogService {
     private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
+    private com.sakuraverse.backend.service.IPUsernameService ipUsernameService;
+
+    @Autowired
     private ElasticsearchOperations elasticsearchOperations;
 
     @Override
@@ -140,43 +143,87 @@ public class BlogServiceImpl implements BlogService {
     @Override
     public List<Map<String, Object>> getSearchWordCloud() {
         String aggName = "top_keywords";
-
-        // 1. 构建查询 (Java 8 / Spring Boot 2 写法)
-        NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder()
-                // 添加聚合：Terms聚合，统计 "keyword" 字段，取前20个
-                .addAggregation(AggregationBuilders.terms(aggName).field("keyword").size(20))
-                // 只要聚合结果，不需要文档列表，设置分页大小为1 (旧版API没法直接设size=0，用分页1代替)
-                .withPageable(PageRequest.of(0, 1));
-
-        NativeSearchQuery query = queryBuilder.build();
-
-        // 2. 执行搜索
-        SearchHits<SearchLogDocument> response = elasticsearchOperations.search(query, SearchLogDocument.class);
-
         List<Map<String, Object>> result = new ArrayList<>();
 
-// 3. 解析聚合结果
-        if (response.getAggregations() != null) {
-            // 关键修复步骤：
-            // 1. 获取 Spring 的包装容器
-            // 2. 调用 .aggregations() 获取底层的 Object
-            // 3. 强制转换为 org.elasticsearch.search.aggregations.Aggregations
-            Aggregations aggregations = (Aggregations) response.getAggregations().aggregations();
+        try {
+            // 方案1：从帖子内容（blog_posts索引）中聚合标签作为词云数据
+            // 聚合 tags 字段（标签）作为词云数据
+            NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder()
+                    // 添加聚合：Terms聚合，统计 "tags" 字段（Keyword 类型），取前20个
+                    .addAggregation(AggregationBuilders.terms(aggName).field("tags").size(20))
+                    // 只要聚合结果，不需要文档列表
+                    .withPageable(PageRequest.of(0, 1));
 
-            // 4. 从原生 ES 对象中获取 Terms 聚合
-            Terms terms = aggregations.get(aggName);
+            NativeSearchQuery query = queryBuilder.build();
 
-            if (terms != null) {
-                for (Terms.Bucket bucket : terms.getBuckets()) {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("text", bucket.getKeyAsString());
-                    map.put("count", bucket.getDocCount());
-                    result.add(map);
+            // 执行搜索（从 PostDocument 索引）
+            SearchHits<PostDocument> response = elasticsearchOperations.search(query, PostDocument.class);
+
+            // 解析聚合结果
+            if (response.getAggregations() != null) {
+                Aggregations aggregations = (Aggregations) response.getAggregations().aggregations();
+                Terms terms = aggregations.get(aggName);
+
+                if (terms != null && terms.getBuckets() != null && !terms.getBuckets().isEmpty()) {
+                    for (Terms.Bucket bucket : terms.getBuckets()) {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("text", bucket.getKeyAsString());
+                        map.put("count", bucket.getDocCount());
+                        result.add(map);
+                    }
                 }
+            }
+
+            // 如果从帖子标签获取到数据，直接返回
+            if (!result.isEmpty()) {
+                log.info("Word cloud generated from post tags: {} keywords", result.size());
+                return result;
+            }
+
+            // 方案2：如果帖子标签为空，尝试从搜索日志获取
+            NativeSearchQueryBuilder logQueryBuilder = new NativeSearchQueryBuilder()
+                    .addAggregation(AggregationBuilders.terms(aggName).field("keyword").size(20))
+                    .withPageable(PageRequest.of(0, 1));
+
+            NativeSearchQuery logQuery = logQueryBuilder.build();
+            SearchHits<SearchLogDocument> logResponse = elasticsearchOperations.search(logQuery, SearchLogDocument.class);
+
+            if (logResponse.getAggregations() != null) {
+                Aggregations logAggregations = (Aggregations) logResponse.getAggregations().aggregations();
+                Terms logTerms = logAggregations.get(aggName);
+
+                if (logTerms != null && logTerms.getBuckets() != null && !logTerms.getBuckets().isEmpty()) {
+                    for (Terms.Bucket bucket : logTerms.getBuckets()) {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("text", bucket.getKeyAsString());
+                        map.put("count", bucket.getDocCount());
+                        result.add(map);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to get word cloud from ES: {}", e.getMessage());
+            // 如果 ES 连接失败，尝试从数据库获取标签作为词云
+            try {
+                List<String> tags = blogMapper.selectAllTags();
+                if (tags != null && !tags.isEmpty()) {
+                    for (int i = 0; i < tags.size() && i < 20; i++) {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("text", tags.get(i));
+                        map.put("count", (tags.size() - i) * 10L + 5);
+                        result.add(map);
+                    }
+                    log.info("Word cloud generated from database tags: {} keywords", result.size());
+                    return result;
+                }
+            } catch (Exception dbEx) {
+                log.error("Failed to get tags from database: {}", dbEx.getMessage());
             }
         }
 
+        // 如果都为空，返回默认数据
         if (result.isEmpty()) {
+            log.warn("Word cloud is empty, using default data");
             return getDefaultCloudData();
         }
 
@@ -198,13 +245,47 @@ public class BlogServiceImpl implements BlogService {
     public BlogPost getPostDetail(Long id) {
         String cacheKey = "post:detail:" + id;
         BlogPost cached = (BlogPost) redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) return cached;
+        if (cached != null) {
+            // Recursively load replies for each comment (supports multi-level nesting)
+            if (cached.getComments() != null) {
+                cached.getComments().forEach(comment -> {
+                    loadRepliesRecursively(comment);
+                });
+            }
+            return cached;
+        }
 
         BlogPost post = blogMapper.selectPostDetail(id);
         if (post != null) {
+            // Recursively load replies for each comment (supports multi-level nesting)
+            if (post.getComments() != null) {
+                post.getComments().forEach(comment -> {
+                    loadRepliesRecursively(comment);
+                });
+            }
             redisTemplate.opsForValue().set(cacheKey, post, 1, TimeUnit.HOURS);
         }
         return post;
+    }
+
+    /**
+     * Recursively load replies for a comment (supports multi-level nesting)
+     */
+    private void loadRepliesRecursively(Comment comment) {
+        if (comment.getId() == null) {
+            return;
+        }
+        
+        List<Comment> replies = blogMapper.selectRepliesByParentId(comment.getId());
+        if (replies != null && !replies.isEmpty()) {
+            comment.setReplies(replies);
+            // Recursively load replies for each reply
+            for (Comment reply : replies) {
+                loadRepliesRecursively(reply);
+            }
+        } else {
+            comment.setReplies(new ArrayList<>());
+        }
     }
 
     /**
@@ -311,13 +392,26 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     @Transactional
-    public void addComment(Long postId, Comment comment) {
+    public void addComment(Long postId, Comment comment, String clientIP) {
         comment.setPostId(postId);
-        if (comment.getAuthor() == null || comment.getAuthor().trim().isEmpty()) {
-            comment.setAuthor("Guest User");
-        }
+        // Get or create username based on IP
+        String username = ipUsernameService.getOrCreateUsername(clientIP);
+        comment.setAuthor(username);
         blogMapper.insertComment(comment);
         redisTemplate.delete("post:detail:" + postId);
+        clearCaches(null);
+    }
+
+    @Override
+    public void deleteComment(Long commentId) {
+        if (commentId == null) {
+            throw new IllegalArgumentException("Comment ID cannot be null");
+        }
+        int deletedRows = blogMapper.deleteComment(commentId);
+        if (deletedRows == 0) {
+            throw new IllegalArgumentException("Comment with ID " + commentId + " does not exist");
+        }
+        // Clear all post caches since we don't know which post this comment belonged to
         clearCaches(null);
     }
 

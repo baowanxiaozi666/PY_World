@@ -19,48 +19,50 @@ const TagManager: React.FC<TagManagerProps> = ({ tags, selectedTag, onSelectTag,
         </h3>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => onSelectTag(null)}
-          className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-300
-            ${selectedTag === null 
-              ? 'bg-anime-accent text-white shadow-md' 
-              : 'bg-anime-bg text-anime-text hover:bg-anime-text/10'
-            }
-          `}
-        >
-          All
-        </button>
-        {tags.map(tag => (
-          <div 
-            key={tag}
-            className={`group flex items-center gap-1 pl-3 pr-2 py-1 rounded-full text-sm font-medium transition-all duration-300 border
-              ${selectedTag === tag
-                ? 'bg-anime-accent text-white border-anime-accent shadow-md' 
-                : 'bg-anime-bg text-anime-text border-anime-text/10 hover:border-anime-accent/50'
+      <div className="max-h-60 overflow-y-auto p-2 bg-anime-bg/30 rounded-xl">
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            onClick={() => onSelectTag(null)}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300
+              ${selectedTag === null 
+                ? 'bg-anime-accent text-white shadow-md' 
+                : 'bg-anime-bg text-anime-text hover:bg-anime-text/10'
               }
             `}
           >
-            <span 
-              onClick={() => onSelectTag(tag === selectedTag ? null : tag)}
-              className="cursor-pointer"
+            All
+          </button>
+          {tags.map(tag => (
+            <div 
+              key={tag}
+              className={`group flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-full text-sm font-medium transition-all duration-300 border
+                ${selectedTag === tag
+                  ? 'bg-anime-accent text-white border-anime-accent shadow-md' 
+                  : 'bg-anime-bg text-anime-text border-anime-text/10 hover:border-anime-accent/50'
+                }
+              `}
             >
-              {tag}
-            </span>
-            
-            {isLoggedIn && (
-              <button 
-                onClick={(e) => { e.stopPropagation(); onDeleteTag(tag); }}
-                className={`ml-1 p-0.5 rounded-full hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity
-                   ${selectedTag === tag ? 'text-white' : 'text-anime-text'}
-                `}
-                title="Delete Tag"
+              <span 
+                onClick={() => onSelectTag(tag === selectedTag ? null : tag)}
+                className="cursor-pointer max-w-[120px] truncate"
               >
-                <X size={12} />
-              </button>
-            )}
-          </div>
-        ))}
+                {tag}
+              </span>
+              
+              {isLoggedIn && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onDeleteTag(tag); }}
+                  className={`p-0.5 rounded-full hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity
+                     ${selectedTag === tag ? 'text-white' : 'text-anime-text'}
+                  `}
+                  title="Delete Tag"
+                >
+                  <X size={10} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

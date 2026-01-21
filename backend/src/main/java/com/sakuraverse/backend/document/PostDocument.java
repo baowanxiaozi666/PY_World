@@ -26,7 +26,9 @@ public class PostDocument {
     @Field(type = FieldType.Keyword)
     private String category;
     
-    @Field(type = FieldType.Text, analyzer = "ik_max_word")
+    // 使用 Keyword 类型以便进行聚合统计（词云）
+    // 如果需要搜索，可以同时定义 Text 和 Keyword 两个字段
+    @Field(type = FieldType.Keyword)
     private String[] tags;
 
     // Added for sorting

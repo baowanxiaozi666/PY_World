@@ -13,6 +13,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 
@@ -68,11 +69,62 @@ public class BlogController {
     }
 
     @PostMapping("/posts/{id}/comments")
-    public Result<Void> addComment(@PathVariable Long id, @RequestBody CommentDTO commentDto) {
+    public Result<Void> addComment(@PathVariable Long id, @RequestBody CommentDTO commentDto, HttpServletRequest request) {
         Comment comment = new Comment();
         BeanUtils.copyProperties(commentDto, comment);
-        blogService.addComment(id, comment);
+        
+        // Get client IP address
+        String clientIP = getClientIP(request);
+        
+        blogService.addComment(id, comment, clientIP);
         return Result.success();
+    }
+
+    @PostMapping("/posts/{postId}/comments/{parentId}/reply")
+    public Result<Void> addReply(@PathVariable Long postId, @PathVariable Long parentId, 
+                                   @RequestBody CommentDTO commentDto, HttpServletRequest request) {
+        Comment comment = new Comment();
+        BeanUtils.copyProperties(commentDto, comment);
+        comment.setParentId(parentId);
+        
+        // Get client IP address
+        String clientIP = getClientIP(request);
+        
+        blogService.addComment(postId, comment, clientIP);
+        return Result.success();
+    }
+
+    @DeleteMapping("/posts/{postId}/comments/{commentId}")
+    public Result<Void> deleteComment(@PathVariable Long postId, @PathVariable Long commentId) {
+        try {
+            blogService.deleteComment(commentId);
+            return Result.success();
+        } catch (IllegalArgumentException e) {
+            return Result.error(404, e.getMessage());
+        } catch (Exception e) {
+            return Result.error(500, "Failed to delete comment: " + e.getMessage());
+        }
+    }
+
+    private String getClientIP(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // Handle multiple IPs (X-Forwarded-For can contain multiple IPs)
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip != null ? ip : "unknown";
     }
     
     @PostMapping("/chat")

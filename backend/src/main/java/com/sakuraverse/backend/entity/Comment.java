@@ -18,4 +18,10 @@ public class Comment implements Serializable {
     
     // Used for inserting comment (linking to post)
     private Long postId;
+    
+    // Used for reply functionality
+    private Long parentId; // null for top-level comments, comment_id for replies
+    
+    // Replies list (not stored in DB, populated when fetching)
+    private java.util.List<Comment> replies;
 }

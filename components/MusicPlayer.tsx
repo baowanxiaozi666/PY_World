@@ -12,6 +12,7 @@ const MusicPlayer: React.FC = () => {
   const [volume, setVolume] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
   const [showVolume, setShowVolume] = useState(false);
+  const failedTracksRef = useRef<Set<number>>(new Set());
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -22,35 +23,52 @@ const MusicPlayer: React.FC = () => {
   const playerRef = useRef<HTMLDivElement>(null);
 
   // Fetch Music
+  const fetchMusic = async () => {
+      try {
+          const response = await fetch('/api/music');
+          if (response.ok) {
+              const res = await response.json();
+              if (res.code === 200) {
+                  // 过滤掉无效的音乐（确保只显示数据库中存在的音乐）
+                  if (res.data && Array.isArray(res.data)) {
+                      // 过滤：只保留有 ID 的音乐
+                      const validMusic = res.data.filter((track: MusicTrack) => 
+                          track && track.id != null && track.id !== undefined
+                      );
+                      setPlaylist(validMusic);
+                  } else {
+                      setPlaylist([]);
+                  }
+              } else {
+                  console.warn("Failed to fetch music:", res.message);
+                  setPlaylist([]);
+              }
+          } else {
+              console.warn("Music API returned non-OK status:", response.status);
+              setPlaylist([]);
+          }
+      } catch (e) {
+          console.warn("Failed to fetch music from backend:", e);
+          // 不再使用默认音乐，直接设置为空列表
+          setPlaylist([]);
+      }
+  };
+
   useEffect(() => {
-    const fetchMusic = async () => {
-        try {
-            const response = await fetch('/api/music');
-            if (response.ok) {
-                const res = await response.json();
-                if (res.code === 200 && res.data.length > 0) {
-                    setPlaylist(res.data);
-                } else {
-                    // Fallback
-                    setPlaylist([{
-                        title: "No Music Found",
-                        artist: "Backend",
-                        url: "",
-                        coverUrl: "https://via.placeholder.com/50"
-                    }]);
-                }
-            }
-        } catch (e) {
-            console.log("Offline mode - using default music");
-            setPlaylist([{
-                 title: "Sakura Beats",
-                 artist: "Lo-fi Girl",
-                 url: "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3",
-                 coverUrl: "https://picsum.photos/200?random=100"
-            }]);
-        }
-    };
     fetchMusic();
+    // 每10秒自动刷新一次，确保新添加的音乐能显示
+    const interval = setInterval(fetchMusic, 10000);
+    // 监听页面可见性变化，当页面重新可见时刷新
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchMusic();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   // Initialize Audio
@@ -64,7 +82,79 @@ const MusicPlayer: React.FC = () => {
       }
 
       const audio = audioRef.current;
-      const trackUrl = playlist[currentIndex].url;
+      const currentTrack = playlist[currentIndex];
+      if (!currentTrack) {
+          console.warn("No current track available");
+          return;
+      }
+
+      // 如果当前音乐已经失败，直接跳过（避免无限循环）
+      if (failedTracksRef.current.has(currentTrack.id || 0)) {
+          console.warn(`Track ${currentTrack.id} is already marked as failed, skipping...`);
+          // 延迟执行，避免在 useEffect 中直接更新状态
+          const skipTimer = setTimeout(() => {
+              let attempts = 0;
+              let nextIndex = currentIndex;
+              while (attempts < playlist.length) {
+                  nextIndex = (nextIndex + 1) % playlist.length;
+                  const nextTrack = playlist[nextIndex];
+                  if (nextTrack && !failedTracksRef.current.has(nextTrack.id || 0)) {
+                      setCurrentIndex(nextIndex);
+                      return;
+                  }
+                  attempts++;
+              }
+              // 如果所有都失败了，停止播放
+              console.warn("No playable tracks available");
+              setIsPlaying(false);
+          }, 100);
+          return () => clearTimeout(skipTimer);
+      }
+
+      // 优先使用外部 URL，如果没有则使用流式 URL
+      let trackUrl = '';
+      if (currentTrack.url && currentTrack.url.trim() !== '') {
+          trackUrl = currentTrack.url;
+          // 如果是流式 URL，检查是否是相对路径，需要转换为完整 URL
+          if (trackUrl.startsWith('/api/music/stream/')) {
+              // 保持相对路径，浏览器会自动处理
+              trackUrl = trackUrl;
+          }
+      } else if (currentTrack.id) {
+          trackUrl = `/api/music/stream/${currentTrack.id}`;
+      }
+
+      if (!trackUrl || trackUrl.trim() === '') {
+          console.warn("No valid track URL available for playback, skipping track:", currentTrack);
+          const trackId = currentTrack.id || 0;
+          // 标记为失败
+          failedTracksRef.current.add(trackId);
+          
+          // 如果当前音乐无法播放，尝试下一首未失败的音乐
+          if (playlist.length > 1) {
+              setTimeout(() => {
+                  let attempts = 0;
+                  let nextIndex = currentIndex;
+                  while (attempts < playlist.length) {
+                      nextIndex = (nextIndex + 1) % playlist.length;
+                      const nextTrack = playlist[nextIndex];
+                      if (nextTrack && !failedTracksRef.current.has(nextTrack.id || 0)) {
+                          console.log(`Trying next track: ${nextTrack.title} (index ${nextIndex})`);
+                          setCurrentIndex(nextIndex);
+                          setIsPlaying(true);
+                          return;
+                      }
+                      attempts++;
+                  }
+                  // 如果所有都失败了，停止播放
+                  console.warn("No playable tracks available");
+                  setIsPlaying(false);
+              }, 500);
+          } else {
+              setIsPlaying(false);
+          }
+          return;
+      }
 
       const handleTimeUpdate = () => {
           if (audio.duration) {
@@ -77,52 +167,132 @@ const MusicPlayer: React.FC = () => {
       };
 
       const handleError = (e: Event) => {
-          // Suppress detailed object logging to avoid console spam
-          console.log("Audio load state:", audio.error ? `Error Code: ${audio.error.code}` : "Unknown interruption");
+          const error = audio.error;
+          if (error) {
+              console.error("Audio error:", `Error Code: ${error.code}, Message: ${error.message}`);
+              // Error Code 4 = MEDIA_ELEMENT_ERROR (usually 404 or format error)
+              if (error.code === 4) {
+                  const trackId = currentTrack.id || 0;
+                  console.warn(`Track ${trackId} (${currentTrack.title}) cannot be loaded`);
+                  
+                  // 标记为失败
+                  failedTracksRef.current.add(trackId);
+                  
+                  // 检查是否所有音乐都失败了
+                  const allFailed = playlist.every(track => failedTracksRef.current.has(track.id || 0));
+                  if (allFailed) {
+                      console.warn("All tracks failed to load, stopping playback");
+                      setIsPlaying(false);
+                      return;
+                  }
+                  
+                  // 延迟执行，避免在事件处理中直接更新状态导致循环
+                  setTimeout(() => {
+                      let attempts = 0;
+                      let nextIndex = currentIndex;
+                      while (attempts < playlist.length) {
+                          nextIndex = (nextIndex + 1) % playlist.length;
+                          const nextTrack = playlist[nextIndex];
+                          if (nextTrack && !failedTracksRef.current.has(nextTrack.id || 0)) {
+                              console.log(`Trying next track: ${nextTrack.title} (index ${nextIndex})`);
+                              setCurrentIndex(nextIndex);
+                              setIsPlaying(true);
+                              return;
+                          }
+                          attempts++;
+                      }
+                      // 如果所有都失败了，停止播放
+                      console.warn("No playable tracks available");
+                      setIsPlaying(false);
+                  }, 300);
+                  return;
+              }
+          }
           setIsPlaying(false);
+      };
+
+      const handleCanPlay = () => {
+          // 当音频可以播放时，如果之前是播放状态，继续播放
+          if (isPlaying) {
+              const playPromise = audio.play();
+              if (playPromise !== undefined) {
+                  playPromise.catch(error => {
+                      console.log("Audio play error after canplay:", error);
+                      setIsPlaying(false);
+                  });
+              }
+          }
+      };
+
+      const handleLoadStart = () => {
+          console.log("Audio loading started for:", trackUrl);
       };
 
       audio.addEventListener('timeupdate', handleTimeUpdate);
       audio.addEventListener('ended', handleEnded);
       audio.addEventListener('error', handleError);
+      audio.addEventListener('canplay', handleCanPlay);
+      audio.addEventListener('loadstart', handleLoadStart);
 
       // Only update src if changed to prevent reloading on re-renders
       if (audio.src !== trackUrl) {
+          console.log("Loading new track:", trackUrl);
           audio.src = trackUrl;
           audio.load(); // Critical for some browsers after src change
-          if (isPlaying) {
-              const playPromise = audio.play();
-              if (playPromise !== undefined) {
-                  playPromise.catch(error => {
-                      // Auto-play policies often block this
-                      // console.log("Autoplay prevented:", error); 
-                      setIsPlaying(false);
-                  });
-              }
-          }
       }
 
       return () => {
           audio.removeEventListener('timeupdate', handleTimeUpdate);
           audio.removeEventListener('ended', handleEnded);
           audio.removeEventListener('error', handleError);
+          audio.removeEventListener('canplay', handleCanPlay);
+          audio.removeEventListener('loadstart', handleLoadStart);
       }
   }, [playlist, currentIndex]);
 
   // Handle Play/Pause Toggle
   useEffect(() => {
-      if (audioRef.current && audioRef.current.src) {
-          if (isPlaying) {
-              const playPromise = audioRef.current.play();
+      if (!audioRef.current) return;
+      
+      const audio = audioRef.current;
+      
+      // 确保音频已加载
+      if (!audio.src) {
+          console.warn("Cannot play: audio source not set");
+          setIsPlaying(false);
+          return;
+      }
+
+      if (isPlaying) {
+          // 检查音频是否已准备好
+          if (audio.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+              const playPromise = audio.play();
               if (playPromise !== undefined) {
-                  playPromise.catch(e => {
-                      // console.log("Play interrupted", e);
-                      setIsPlaying(false);
-                  });
+                  playPromise
+                      .then(() => {
+                          console.log("Audio playing successfully");
+                      })
+                      .catch(e => {
+                          console.error("Play interrupted:", e);
+                          setIsPlaying(false);
+                      });
               }
           } else {
-              audioRef.current.pause();
+              // 如果还没准备好，等待 canplay 事件
+              const handleCanPlay = () => {
+                  const playPromise = audio.play();
+                  if (playPromise !== undefined) {
+                      playPromise.catch(e => {
+                          console.error("Play error after canplay:", e);
+                          setIsPlaying(false);
+                      });
+                  }
+                  audio.removeEventListener('canplay', handleCanPlay);
+              };
+              audio.addEventListener('canplay', handleCanPlay);
           }
+      } else {
+          audio.pause();
       }
   }, [isPlaying]);
 
@@ -142,8 +312,9 @@ const MusicPlayer: React.FC = () => {
           }
           return;
       }
-      setCurrentIndex((prev) => (prev + 1) % playlist.length);
-      setIsPlaying(true); 
+      const nextIndex = (currentIndex + 1) % playlist.length;
+      setCurrentIndex(nextIndex);
+      setIsPlaying(true);
   };
   
   const handlePrev = () => {
@@ -197,6 +368,7 @@ const MusicPlayer: React.FC = () => {
     setDragOffset({ x: e.clientX - position.x, y: e.clientY - position.y });
   };
 
+  // 如果列表为空，不显示播放器（而不是显示占位符）
   if (playlist.length === 0) return null;
 
   const currentTrack = playlist[currentIndex];

@@ -7,4 +7,5 @@ import java.io.Serializable;
 public class CommentDTO implements Serializable {
     private String author;
     private String content;
+    private Long parentId; // For replies
 }

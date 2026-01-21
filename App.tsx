@@ -32,7 +32,7 @@ const App: React.FC = () => {
 
   const [activePage, setActivePage] = useState<Page>(Page.HOME);
   const [posts, setPosts] = useState<BlogPost[]>(BLOG_POSTS);
-  const [tags, setTags] = useState<string[]>(INITIAL_TAGS);
+  const [tags, setTags] = useState<string[]>([]); // 不使用默认常量，从后端获取
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -123,6 +123,7 @@ const App: React.FC = () => {
     fetchCloudData();
     fetchTags();
     fetchProfile();
+    fetchPosts(); // 初始化时从后端获取帖子列表
   }, []);
 
   // Fetch Posts from Backend (handles Search AND Tag filtering)
@@ -210,7 +211,7 @@ const App: React.FC = () => {
       // Fallback Default Cloud
       setCloudKeywords([
         { id: 1, text: 'Anime', count: 100, size: 150, top: '15%', animation: 'animate-drift', delay: '0s', opacity: 0.95, rotate: '0deg' },
-        { id: 2, text: 'React', count: 80, size: 135, top: '45%', animation: 'animate-drift-slow', delay: '-8s', opacity: 0.9, rotate: '5deg' },
+        { id: 2, text: 'Java', count: 80, size: 135, top: '45%', animation: 'animate-drift-slow', delay: '-8s', opacity: 0.9, rotate: '5deg' },
         { id: 3, text: 'Travel', count: 60, size: 125, top: '75%', animation: 'animate-drift-slower', delay: '-15s', opacity: 0.85, rotate: '-3deg' },
         { id: 4, text: 'Design', count: 50, size: 110, top: '60%', animation: 'animate-drift', delay: '-5s', opacity: 0.8, rotate: '8deg' },
         { id: 5, text: 'Game', count: 45, size: 105, top: '30%', animation: 'animate-drift-slow', delay: '-12s', opacity: 0.8, rotate: '-5deg' },
@@ -219,8 +220,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-        // If backend is online, we might want to fetch, but in offline mode we rely on local state
-        // fetchPosts(); 
+        // 当搜索词或标签变化时，从后端获取过滤后的帖子
+        fetchPosts();
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery, selectedTag]);
@@ -233,8 +234,27 @@ const App: React.FC = () => {
     });
   };
 
-  const handlePostClick = (post: BlogPost) => {
-    setSelectedPost(post);
+  const handlePostClick = async (post: BlogPost) => {
+    // Always fetch fresh post detail from backend to ensure comments and replies are loaded
+    try {
+      const response = await fetch(`/api/posts/${post.id}`);
+      if (response.ok) {
+        const result = await response.json();
+        if (result.code === 200) {
+          setSelectedPost(result.data);
+        } else {
+          // Fallback to the post from list if API fails
+          setSelectedPost(post);
+        }
+      } else {
+        // Fallback to the post from list if API fails
+        setSelectedPost(post);
+      }
+    } catch (error) {
+      console.error("Failed to fetch post detail:", error);
+      // Fallback to the post from list if API fails
+      setSelectedPost(post);
+    }
     setActivePage(Page.BLOG_DETAIL);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -304,31 +324,64 @@ const App: React.FC = () => {
         : `/api/admin/posts`;
 
       try {
+          // 准备发送的数据：只包含后端 PostDTO 需要的字段
+          const postData: any = {
+              title: post.title || '',
+              excerpt: post.excerpt || '',
+              content: post.content || '',
+              category: post.category || '',
+              imageUrl: post.imageUrl || '',
+              tags: post.tags || []
+          };
+          
+          // 编辑时，id 在 URL 路径中，不需要在 body 里
+          // 确保所有必需字段都有值
+          if (!postData.title || !postData.content || !postData.category) {
+              alert("Please fill in all required fields (Title, Content, Category)");
+              return;
+          }
+
+          console.log("Saving post:", postData); // 调试用
+
           const response = await fetch(url, {
               method,
               headers: {
                   'Content-Type': 'application/json',
                   'Authorization': `Bearer ${token}`
               },
-              body: JSON.stringify(post)
+              body: JSON.stringify(postData)
           });
 
+          // 先尝试读取响应体（无论成功还是失败）
+          let responseData: any = {};
+          try {
+              const text = await response.text();
+              if (text) {
+                  responseData = JSON.parse(text);
+              }
+          } catch (e) {
+              console.warn("Failed to parse response:", e);
+          }
+
           if (response.ok) {
-              const res = await response.json();
-              if (res.code === 200) {
+              if (responseData.code === 200) {
+                  // 保存成功后刷新列表
                   await fetchPosts();
                   await fetchTags();
                   setActivePage(Page.ADMIN_DASHBOARD);
               } else {
-                  alert(res.message || "Failed to save post");
+                  alert(responseData.message || "Failed to save post");
               }
           } else {
-              alert("Failed to save post");
+              // 400 或其他错误，显示详细错误信息
+              const errorMessage = responseData.message || responseData.error || 
+                                  `Failed to save post (Status: ${response.status})`;
+              console.error("Save post error:", responseData);
+              alert(errorMessage);
           }
       } catch (e) {
           console.error("Error saving post", e);
-          // Fallback if backend was thought to be online but failed
-          alert("Network error. Backend seems offline.");
+          alert("Network error: " + (e instanceof Error ? e.message : "Backend seems offline."));
       }
   };
   
@@ -554,7 +607,7 @@ const App: React.FC = () => {
                      </div>
                      <h3 className="font-bold text-anime-text group-hover:text-anime-accent transition-colors">{aboutProfile.displayName}</h3>
                      {isLoggedIn && <span className="text-[10px] bg-anime-accent text-white px-2 py-0.5 rounded-full">Admin</span>}
-                     <p className="text-xs text-anime-text/60 mt-1">Frontend Wizard & Anime Addict</p>
+                     <p className="text-xs text-anime-text/60 mt-1">且趁余花谋一笑</p>
                    </div>
                 </div>
 
@@ -619,19 +672,27 @@ const App: React.FC = () => {
         );
         
       case Page.CREATE_POST:
+          // 从已有帖子中提取所有分类
+          const allCategories = Array.from(new Set(posts.map(p => p.category).filter(Boolean)));
           return (
               <PostEditor 
                   onSave={handleSavePost}
                   onCancel={() => handleNavigate(Page.ADMIN_DASHBOARD)}
+                  availableTags={tags}
+                  availableCategories={allCategories}
               />
           );
 
       case Page.EDIT_POST:
+          // 从已有帖子中提取所有分类
+          const allCategoriesEdit = Array.from(new Set(posts.map(p => p.category).filter(Boolean)));
           return (
               <PostEditor 
                   initialPost={selectedPost}
                   onSave={handleSavePost}
                   onCancel={() => handleNavigate(Page.ADMIN_DASHBOARD)}
+                  availableTags={tags}
+                  availableCategories={allCategoriesEdit}
               />
           );
 
@@ -710,7 +771,7 @@ const App: React.FC = () => {
                    <p className="text-sm text-anime-text/60">{aboutProfile.interests}</p>
                  </div>
                  <div className="bg-anime-bg p-4 rounded-xl border border-anime-secondary/20">
-                   <h3 className="font-bold text-anime-text mb-1">Anime Taste</h3>
+                   <h3 className="font-bold text-anime-text mb-1">Film & TV Enthusiast</h3>
                    <p className="text-sm text-anime-text/60">{aboutProfile.animeTaste}</p>
                  </div>
               </div>

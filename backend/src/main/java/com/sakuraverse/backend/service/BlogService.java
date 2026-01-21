@@ -12,7 +12,9 @@ public interface BlogService {
     BlogPost getPostDetail(Long id);
     void likePost(Long id);
     void unlikePost(Long id); // Added
-    void addComment(Long postId, Comment comment);
+    void addComment(Long postId, Comment comment, String clientIP);
+    
+    void deleteComment(Long commentId);
     List<String> getAllTags();
     void savePost(BlogPost post);
     void deletePost(Long id);

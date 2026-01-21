@@ -17,5 +17,5 @@ public interface MusicMapper {
 
     void insert(MusicTrack musicTrack);
 
-    void delete(@Param("id") Long id);
+    int delete(@Param("id") Long id);
 }

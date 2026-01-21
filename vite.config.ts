@@ -12,5 +12,10 @@ export default defineConfig({
         secure: false
       }
     }
+  },
+  define: {
+    // 防止在浏览器环境中访问 process 对象
+    'process.env': '{}',
+    'process': 'undefined',
   }
 });

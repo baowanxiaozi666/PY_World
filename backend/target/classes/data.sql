@@ -2,7 +2,7 @@
 -- Username: admin
 -- Password: password
 INSERT INTO `sys_user` (`username`, `password`, `nickname`, `avatar`) 
-VALUES ('baowanxiaozi', '13102690818Py', 'PangYan Admin', 'https://tse3-mm.cn.bing.net/th/id/OIP-C.QZqdiF42BGMWI1eNlp_HEgHaHa?w=218&h=218&c=7&r=0&o=7&dpr=1.1&pid=1.7&rm=3');
+VALUES ('baowanxiaozi', 'baowanxiaozi12345', 'PangYan Admin', 'https://tse3-mm.cn.bing.net/th/id/OIP-C.QZqdiF42BGMWI1eNlp_HEgHaHa?w=218&h=218&c=7&r=0&o=7&dpr=1.1&pid=1.7&rm=3');
 
 -- Initial Categories
 INSERT INTO `blog_category` (`name`) VALUES 

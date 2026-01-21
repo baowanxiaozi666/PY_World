@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     # Matches docker-compose service
-    url: jdbc:mysql://localhost:3306/pangyan's world?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://localhost:3306/pangyan_world?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -22,7 +22,7 @@ spring:
       password: 123456
     
   elasticsearch:
-      uris: http://localhost:9202
+      uris: http://localhost:9200
 
   servlet:
     multipart:

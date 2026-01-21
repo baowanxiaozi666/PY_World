@@ -4,11 +4,8 @@ import { SYSTEM_INSTRUCTION_MASCOT } from "../constants";
 // 在浏览器环境下没有 Node 的 process 对象，这里做兼容处理：
 // - 推荐：在 .env 文件中配置 VITE_GEMINI_API_KEY=你的key
 // - 如果找不到 key，就走本地“假回复”，但不会让整个页面崩溃
-const apiKey =
-  // Vite 环境变量（推荐）
-  (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-  // 兼容未来在 Node 环境下复用同一服务
-  (typeof process !== "undefined" ? (process as any).env?.API_KEY : undefined);
+// 获取 API Key：优先使用 Vite 环境变量
+const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || undefined;
 
 // 只有拿到 key 时才初始化客户端
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;

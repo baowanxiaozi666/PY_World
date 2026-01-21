@@ -668,6 +668,7 @@ const App: React.FC = () => {
             onUpdatePost={handleUpdatePost}
             isLoggedIn={isLoggedIn}
             onEdit={handleEditPost}
+            aboutProfile={aboutProfile}
           />
         );
         

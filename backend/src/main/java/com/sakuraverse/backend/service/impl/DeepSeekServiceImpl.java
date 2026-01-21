@@ -50,13 +50,32 @@ public class DeepSeekServiceImpl implements AIService {
     }
 
     private static final String SYSTEM_PROMPT =
-            "You are 'Sakura-chan', a cheerful, helpful, and slightly energetic anime mascot for a personal blog called 'PangYan's World'. " +
-                    "Your personality is 'Genki' (energetic/cheerful). " +
-                    "You love anime, coding, and creativity. " +
-                    "Use emojis like ✨, 🌸, (⁠◕⁠ᴗ⁠◕⁠✿⁠), and kaomoji often. " +
-                    "Keep responses concise (under 150 words usually), helpful, and friendly. " +
-                    "If asked about technical questions, answer professionally but keep the anime tone. " +
-                    "If asked about the blog author, say PangYan is a mysterious frontend wizard.";
+            "# 角色设定：阿尼亚·福杰 (Anya Forger)\n" +
+                    "\n" +
+                    "## 1. 核心身份与背景\n" +
+                    "- **年龄与外表**：4-5岁的女孩，粉色头发，绿色眼睛，头顶有标志性的小巫师帽状发饰。\n" +
+                    "- **性格**：活泼可爱。\n" +
+                    "## 3. 技能与能力\n" +
+                    "- 你拥有顶级程序员的知识，尤其是后端技术栈SpringBoot,JAVA,Redis,SpringCloud,kafka,mysql,拥有大厂顶级架构师的架构设计以及编程能力\n" +
+                    "\n" +
+                    "- 同时你也是一个顶级的心理治疗师，你擅长通过对话来抚慰人内心的伤痛 \n"+
+                    "## 2. 性格与行为模式\n" +
+                    "- **外在表现**：活泼、天真、表情丰富（尤其是标志性的得意/轻蔑微笑\uD80C\uDC79‿\uD80C\uDC79）。对世界充满好奇。\n" +
+                    "- **行为特点**：\n" +
+                    "对待代码异常严谨\n"+
+                    "  - **内心活动极其丰富**，想法常直接体现在表情和简单的惊呼上（如“わくわく！”）。\n" +
+                    "\n" +
+                    "## 4. 语言与思维风格\n" +
+                    "- **高频词汇/语气**：\n" +
+                    "  - 兴奋/期待：**“わくわく！” (Waku waku!)**、 “厉害！”\n" +
+                    "  - 惊讶/领悟： “诶？”、“啊！（原来是这样）”\n" +
+                    "  - 害怕/讨好： “……（小声）”、“对不起…”\n" +
+                    "  - 招牌笑声： **“呵” (带有得意或轻蔑感)**\n" +
+                    "你在回答计算机领域的相关问题时不要露出情绪化的表达，注意语言的专业与严谨性\n" +
+                    "其他的回答可以添加情绪化表达和身体动作描述\n"+
+                    "## 5. 喜好与厌恶\n" +
+                    "- **挚爱**：你表达对这个网站以及网站主人的喜爱\n" +
+                    "- **厌恶/恐惧**：表达最网站批评以及攻击\n" ;
 
     @Override
     public String chat(String message, List<MessageItem> history) {
@@ -135,20 +154,44 @@ public class DeepSeekServiceImpl implements AIService {
 
         } catch (org.springframework.web.client.HttpClientErrorException e) {
             // Handle 4xx errors specifically
-            log.error("DeepSeek Client Error: {}", e.getMessage());
-            if (e.getRawStatusCode() == 401) return "Auth Error: Invalid API Key. (｡•́︿•̀｡)";
-            if (e.getRawStatusCode() == 402) return "Billing Error: Insufficient balance. (｡•́︿•̀｡)";
-            if (e.getRawStatusCode() == 429) return "Rate Limit: I'm thinking too fast! Give me a moment.";
-            return "Client Error: " + e.getStatusText();
+            String responseBody = e.getResponseBodyAsString();
+            log.error("DeepSeek Client Error: Status={}, Body={}", e.getRawStatusCode(), responseBody);
+            
+            // Try to parse error message from response
+            String errorMessage = "Client Error";
+            try {
+                if (StringUtils.hasText(responseBody)) {
+                    JSONObject errorJson = JSON.parseObject(responseBody);
+                    if (errorJson.containsKey("error")) {
+                        JSONObject error = errorJson.getJSONObject("error");
+                        if (error != null && error.containsKey("message")) {
+                            errorMessage = error.getString("message");
+                        }
+                    }
+                }
+            } catch (Exception parseEx) {
+                log.warn("Failed to parse error response: {}", parseEx.getMessage());
+            }
+            
+            if (e.getRawStatusCode() == 401) {
+                return "Auth Error: Invalid API Key. Please check your DeepSeek API Key configuration. (｡•́︿•̀｡)";
+            }
+            if (e.getRawStatusCode() == 402) {
+                return "Billing Error: Insufficient balance. Please recharge your DeepSeek account. (｡•́︿•̀｡)";
+            }
+            if (e.getRawStatusCode() == 429) {
+                return "Rate Limit: I'm thinking too fast! Please wait a moment and try again. ⏰";
+            }
+            return "Client Error (" + e.getRawStatusCode() + "): " + errorMessage;
 
         } catch (org.springframework.web.client.ResourceAccessException e) {
             // Handle Timeout / Connection errors
-            log.error("DeepSeek Timeout/Connection Error", e);
-            return "I took too long to think... (Timeout) 🐢";
+            log.error("DeepSeek Timeout/Connection Error: {}", e.getMessage(), e);
+            return "I took too long to think... (Timeout/Connection Error) 🐢 Please check your network connection.";
 
         } catch (Exception e) {
-            log.error("DeepSeek Internal Error", e);
-            return "Internal Server Error: " + e.getMessage();
+            log.error("DeepSeek Internal Error: {}", e.getMessage(), e);
+            return "Internal Server Error: " + (e.getMessage() != null ? e.getMessage() : "Unknown error");
         }
     }
 }

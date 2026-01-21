@@ -11,9 +11,10 @@ interface PostDetailProps {
   onUpdatePost: (updatedPost: BlogPost) => void;
   onEdit?: (post: BlogPost) => void;
   isLoggedIn?: boolean;
+  aboutProfile?: { avatarUrl: string };
 }
 
-const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onEdit, isLoggedIn }) => {
+const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onEdit, isLoggedIn, aboutProfile }) => {
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState<{ [key: string]: string }>({});
@@ -97,13 +98,20 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
     });
     setNewComment('');
 
-    // 2. Call Backend (backend will get IP and assign username)
+    // 2. Call Backend (backend will get IP and assign username, or "The Developer" if logged in)
     try {
+      // Get token from localStorage for authentication
+      const token = localStorage.getItem('token');
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`/api/posts/${post.id}/comments`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify({
           content: tempComment.content
         })
@@ -213,11 +221,18 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
     setReplyingTo(null);
 
     try {
+      // Get token from localStorage for authentication
+      const token = localStorage.getItem('token');
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`/api/posts/${post.id}/comments/${parentCommentId}/reply`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify({
           content: replyText
         })
@@ -281,7 +296,8 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
     depth: number;
     expandedComments: Set<string>;
     setExpandedComments: React.Dispatch<React.SetStateAction<Set<string>>>;
-  }> = ({ replies, parentAuthor, postId, onUpdatePost, onDeleteComment, replyingTo, setReplyingTo, replyContent, setReplyContent, onAddReply, depth, expandedComments, setExpandedComments }) => {
+    aboutProfile?: { avatarUrl: string };
+  }> = ({ replies, parentAuthor, postId, onUpdatePost, onDeleteComment, replyingTo, setReplyingTo, replyContent, setReplyContent, onAddReply, depth, expandedComments, setExpandedComments, aboutProfile }) => {
     const maxDepth = 5; // Limit nesting depth to prevent UI issues
     if (depth >= maxDepth) {
       return null;
@@ -294,9 +310,27 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
         {replies.map(reply => (
           <div key={reply.id} className="space-y-3">
             <div className="flex gap-3 animate-fade-in group/reply">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-anime-secondary to-anime-accent flex items-center justify-center text-white shrink-0">
-                <User size={16} />
-              </div>
+              {reply.author === "The Developer" && aboutProfile?.avatarUrl ? (
+                <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border-2 border-anime-accent">
+                  <img 
+                    src={aboutProfile.avatarUrl} 
+                    alt="The Developer" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback to default icon if image fails to load
+                      e.currentTarget.style.display = 'none';
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        parent.innerHTML = '<div class="w-8 h-8 rounded-full bg-gradient-to-br from-anime-secondary to-anime-accent flex items-center justify-center text-white shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>';
+                      }
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-anime-secondary to-anime-accent flex items-center justify-center text-white shrink-0">
+                  <User size={16} />
+                </div>
+              )}
               <div className="flex-grow">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
@@ -401,6 +435,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
                   depth={depth + 1}
                   expandedComments={expandedComments}
                   setExpandedComments={setExpandedComments}
+                  aboutProfile={aboutProfile}
                 />
               </div>
             )}
@@ -499,9 +534,27 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
                     <div key={comment.id} className="space-y-3">
                       {/* Main Comment */}
                       <div className="flex gap-4 animate-fade-in group">
-                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-anime-accent to-anime-secondary flex items-center justify-center text-white shrink-0">
-                           <User size={20} />
-                         </div>
+                         {comment.author === "The Developer" && aboutProfile?.avatarUrl ? (
+                           <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border-2 border-anime-accent">
+                             <img 
+                               src={aboutProfile.avatarUrl} 
+                               alt="The Developer" 
+                               className="w-full h-full object-cover"
+                               onError={(e) => {
+                                 // Fallback to default icon if image fails to load
+                                 e.currentTarget.style.display = 'none';
+                                 const parent = e.currentTarget.parentElement;
+                                 if (parent) {
+                                   parent.innerHTML = '<div class="w-10 h-10 rounded-full bg-gradient-to-br from-anime-accent to-anime-secondary flex items-center justify-center text-white shrink-0"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>';
+                                 }
+                               }}
+                             />
+                           </div>
+                         ) : (
+                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-anime-accent to-anime-secondary flex items-center justify-center text-white shrink-0">
+                             <User size={20} />
+                           </div>
+                         )}
                          <div className="flex-grow">
                            <div className="flex items-center justify-between mb-1">
                              <div className="flex items-center gap-2">
@@ -605,6 +658,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
                             depth={0}
                             expandedComments={expandedComments}
                             setExpandedComments={setExpandedComments}
+                            aboutProfile={aboutProfile}
                           />
                         </div>
                       )}

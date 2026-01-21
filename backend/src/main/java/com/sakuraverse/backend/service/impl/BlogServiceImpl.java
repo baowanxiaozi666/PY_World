@@ -392,11 +392,16 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     @Transactional
-    public void addComment(Long postId, Comment comment, String clientIP) {
+    public void addComment(Long postId, Comment comment, String clientIP, String username) {
         comment.setPostId(postId);
-        // Get or create username based on IP
-        String username = ipUsernameService.getOrCreateUsername(clientIP);
-        comment.setAuthor(username);
+        // If username is provided (logged in user), use it; otherwise use IP-based username
+        if (username != null && !username.isEmpty()) {
+            comment.setAuthor(username);
+        } else {
+            // Get or create username based on IP
+            String ipUsername = ipUsernameService.getOrCreateUsername(clientIP);
+            comment.setAuthor(ipUsername);
+        }
         blogMapper.insertComment(comment);
         redisTemplate.delete("post:detail:" + postId);
         clearCaches(null);

@@ -8,9 +8,11 @@ import com.sakuraverse.backend.dto.PostDTO;
 import com.sakuraverse.backend.entity.BlogPost;
 import com.sakuraverse.backend.entity.Comment;
 import com.sakuraverse.backend.service.AIService;
+import com.sakuraverse.backend.service.AuthService;
 import com.sakuraverse.backend.service.BlogService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -26,6 +28,9 @@ public class BlogController {
 
     @Autowired
     private AIService aiService;
+    
+    @Autowired
+    private AuthService authService;
     
     // ==========================================
     // Public Endpoints (Business Logic)
@@ -76,7 +81,10 @@ public class BlogController {
         // Get client IP address
         String clientIP = getClientIP(request);
         
-        blogService.addComment(id, comment, clientIP);
+        // Check if user is logged in
+        String username = getUsernameFromRequest(request);
+        
+        blogService.addComment(id, comment, clientIP, username);
         return Result.success();
     }
 
@@ -90,7 +98,10 @@ public class BlogController {
         // Get client IP address
         String clientIP = getClientIP(request);
         
-        blogService.addComment(postId, comment, clientIP);
+        // Check if user is logged in - if logged in, use "The Developer" as username
+        String username = getUsernameFromRequest(request);
+        
+        blogService.addComment(postId, comment, clientIP, username);
         return Result.success();
     }
 
@@ -125,6 +136,23 @@ public class BlogController {
             ip = ip.split(",")[0].trim();
         }
         return ip != null ? ip : "unknown";
+    }
+    
+    /**
+     * Get username from request - if user is logged in, return "The Developer", otherwise return null
+     * @param request HTTP request
+     * @return "The Developer" if logged in, null otherwise
+     */
+    private String getUsernameFromRequest(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            // Validate token - if valid, user is logged in
+            if (authService.validateToken(token) != null) {
+                return "The Developer";
+            }
+        }
+        return null; // Not logged in, will use IP-based username
     }
     
     @PostMapping("/chat")

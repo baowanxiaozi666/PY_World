@@ -4,6 +4,7 @@ import { Save, Image as ImageIcon, Tag, Hash, Layout, Type, ArrowLeft, Upload, E
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import CodeBlock from './CodeBlock';
 
 interface PostEditorProps {
   initialPost?: BlogPost | null;
@@ -989,6 +990,19 @@ const PostEditor: React.FC<PostEditorProps> = ({
                          <ReactMarkdown
                            remarkPlugins={[remarkGfm]}
                            rehypePlugins={[rehypeRaw]}
+                           components={{
+                             code({ node, inline, className, children, ...props }) {
+                               return (
+                                 <CodeBlock
+                                   inline={inline}
+                                   className={className}
+                                   {...props}
+                                 >
+                                   {children}
+                                 </CodeBlock>
+                               );
+                             },
+                           }}
                          >
                            {content}
                          </ReactMarkdown>

@@ -98,15 +98,26 @@ public class MusicController {
     public Result<Void> addMusic(
             @RequestParam("title") String title,
             @RequestParam("artist") String artist,
-            @RequestParam("coverUrl") String coverUrl,
+            @RequestParam(value = "coverUrl", required = false) String coverUrl,
             @RequestParam("file") MultipartFile file) {
         
         if (file == null || file.isEmpty()) {
             return Result.error(400, "Music file is required");
         }
         
+        // Validate file type
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("audio/")) {
+            return Result.error(400, "Invalid file type. Please upload an audio file (MP3, WAV, etc.)");
+        }
+        
+        // Validate file size (200MB limit from application.yml)
+        if (file.getSize() > 200 * 1024 * 1024) {
+            return Result.error(400, "File size exceeds 200MB limit");
+        }
+        
         try {
-            musicService.addMusic(title, artist, coverUrl, file);
+            musicService.addMusic(title, artist, coverUrl != null ? coverUrl : "", file);
             return Result.success();
         } catch (IllegalArgumentException e) {
             return Result.error(400, e.getMessage());

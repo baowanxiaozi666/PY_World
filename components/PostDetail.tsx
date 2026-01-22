@@ -4,6 +4,7 @@ import { Clock, Tag, ArrowLeft, Heart, Send, User, Edit, Trash2, Reply, ChevronD
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import CodeBlock from './CodeBlock';
 
 interface PostDetailProps {
   post: BlogPost;
@@ -145,6 +146,12 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
   };
 
   const handleDeleteComment = async (commentId: string | number) => {
+    // 检查是否登录，只有登录用户才能删除评论
+    if (!isLoggedIn) {
+      alert('You must be logged in to delete comments!');
+      return;
+    }
+
     if (!window.confirm('Are you sure you want to delete this comment?')) {
       return;
     }
@@ -166,8 +173,18 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
     onUpdatePost(updatedPost);
 
     try {
+      // 添加认证信息（如果已登录）
+      const token = localStorage.getItem('token');
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`/api/posts/${post.id}/comments/${commentId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: headers
       });
 
       if (!response.ok) {
@@ -297,7 +314,8 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
     expandedComments: Set<string>;
     setExpandedComments: React.Dispatch<React.SetStateAction<Set<string>>>;
     aboutProfile?: { avatarUrl: string };
-  }> = ({ replies, parentAuthor, postId, onUpdatePost, onDeleteComment, replyingTo, setReplyingTo, replyContent, setReplyContent, onAddReply, depth, expandedComments, setExpandedComments, aboutProfile }) => {
+    isLoggedIn?: boolean;
+  }> = ({ replies, parentAuthor, postId, onUpdatePost, onDeleteComment, replyingTo, setReplyingTo, replyContent, setReplyContent, onAddReply, depth, expandedComments, setExpandedComments, aboutProfile, isLoggedIn }) => {
     const maxDepth = 5; // Limit nesting depth to prevent UI issues
     if (depth >= maxDepth) {
       return null;
@@ -373,13 +391,15 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
                     >
                       <Reply size={12} />
                     </button>
-                    <button
-                      onClick={() => onDeleteComment(reply.id)}
-                      className="opacity-0 group-hover/reply:opacity-100 transition-opacity p-1 hover:bg-red-500/20 rounded-lg text-red-400 hover:text-red-500"
-                      title="Delete reply"
-                    >
-                      <Trash2 size={12} />
-                    </button>
+                    {isLoggedIn && (
+                      <button
+                        onClick={() => onDeleteComment(reply.id)}
+                        className="opacity-0 group-hover/reply:opacity-100 transition-opacity p-1 hover:bg-red-500/20 rounded-lg text-red-400 hover:text-red-500"
+                        title="Delete reply"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
                   </div>
                 </div>
                 <p className="text-anime-text/80 text-sm bg-anime-bg/50 p-2 rounded-lg border border-anime-text/5">
@@ -436,6 +456,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
                   expandedComments={expandedComments}
                   setExpandedComments={setExpandedComments}
                   aboutProfile={aboutProfile}
+                  isLoggedIn={isLoggedIn}
                 />
               </div>
             )}
@@ -505,6 +526,19 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw]}
+              components={{
+                code({ node, inline, className, children, ...props }: any) {
+                  return (
+                    <CodeBlock
+                      inline={inline}
+                      className={className}
+                      {...props}
+                    >
+                      {children}
+                    </CodeBlock>
+                  );
+                },
+              }}
             >
               {post.content}
             </ReactMarkdown>
@@ -596,13 +630,15 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
                                >
                                  <Reply size={14} />
                                </button>
-                               <button
-                                 onClick={() => handleDeleteComment(comment.id)}
-                                 className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-red-500/20 rounded-lg text-red-400 hover:text-red-500"
-                                 title="Delete comment"
-                               >
-                                 <Trash2 size={14} />
-                               </button>
+                               {isLoggedIn && (
+                                 <button
+                                   onClick={() => handleDeleteComment(comment.id)}
+                                   className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-red-500/20 rounded-lg text-red-400 hover:text-red-500"
+                                   title="Delete comment"
+                                 >
+                                   <Trash2 size={14} />
+                                 </button>
+                               )}
                              </div>
                            </div>
                            <p className="text-anime-text/80 text-sm bg-anime-bg/50 p-3 rounded-tr-xl rounded-bl-xl rounded-br-xl border border-anime-text/5">
@@ -659,6 +695,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
                             expandedComments={expandedComments}
                             setExpandedComments={setExpandedComments}
                             aboutProfile={aboutProfile}
+                            isLoggedIn={isLoggedIn}
                           />
                         </div>
                       )}

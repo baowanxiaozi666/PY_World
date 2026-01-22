@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.List;
@@ -67,11 +66,19 @@ public class MusicServiceImpl implements MusicService {
             // Logic: If the track in DB has no URL (meaning it's a blob upload), generate stream URL
             // If it HAS a URL (like initial data), keep it as is.
             if (track.getUrl() == null || track.getUrl().isEmpty()) {
-                String streamUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                        .path("/api/music/stream/")
-                        .path(String.valueOf(track.getId()))
-                        .toUriString();
+                // Use relative path instead of absolute URL to work in any deployment environment
+                String streamUrl = "/api/music/stream/" + track.getId();
                 track.setUrl(streamUrl);
+            } else {
+                // If URL is absolute and contains localhost, convert to relative path if it's a stream URL
+                String url = track.getUrl();
+                if (url != null && url.contains("/api/music/stream/")) {
+                    // Extract relative path from absolute URL
+                    int streamIndex = url.indexOf("/api/music/stream/");
+                    if (streamIndex >= 0) {
+                        track.setUrl(url.substring(streamIndex));
+                    }
+                }
             }
         });
 

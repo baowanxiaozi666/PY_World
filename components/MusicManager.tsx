@@ -84,15 +84,31 @@ const MusicManager: React.FC<MusicManagerProps> = ({ onBack }) => {
       });
 
       if (response.ok) {
-        await fetchMusic();
-        resetForm();
-      } else {
         const res = await response.json();
-        alert(res.message || "Failed to add music");
+        if (res.code === 200) {
+          await fetchMusic();
+          resetForm();
+          alert("Music uploaded successfully!");
+        } else {
+          alert(res.message || "Failed to add music");
+        }
+      } else {
+        // Try to get error message from response
+        let errorMessage = "Failed to add music";
+        try {
+          const res = await response.json();
+          errorMessage = res.message || `Server error (${response.status})`;
+        } catch (parseError) {
+          // If response is not JSON, use status text
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        alert(errorMessage);
+        console.error("Upload failed:", response.status, errorMessage);
       }
     } catch (e) {
-      console.error(e);
-      alert("Network error or file too large");
+      console.error("Upload error:", e);
+      const errorMsg = e instanceof Error ? e.message : "Network error or file too large";
+      alert(`Upload failed: ${errorMsg}`);
     } finally {
       setIsLoading(false);
     }
@@ -247,7 +263,21 @@ const MusicManager: React.FC<MusicManagerProps> = ({ onBack }) => {
                         <h4 className="font-bold text-anime-text truncate">{track.title}</h4>
                         <p className="text-xs text-anime-text/60 truncate">{track.artist}</p>
                     </div>
-                    <a href={track.url} target="_blank" rel="noreferrer" className="text-anime-secondary hover:text-anime-accent" title="Preview Stream">
+                    <a 
+                        href={track.url?.startsWith('http') ? track.url : (track.url?.startsWith('/') ? track.url : `/api/music/stream/${track.id}`)} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="text-anime-secondary hover:text-anime-accent" 
+                        title="Preview Stream"
+                        onClick={(e) => {
+                            // If it's a relative stream URL, prevent default and open in new tab with current origin
+                            if (track.url && !track.url.startsWith('http')) {
+                                e.preventDefault();
+                                const fullUrl = window.location.origin + (track.url.startsWith('/') ? track.url : `/api/music/stream/${track.id}`);
+                                window.open(fullUrl, '_blank');
+                            }
+                        }}
+                    >
                         <PlayCircle size={20} />
                     </a>
                     <button 

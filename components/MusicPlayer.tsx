@@ -15,6 +15,9 @@ const MusicPlayer: React.FC = () => {
   const failedTracksRef = useRef<Set<number>>(new Set());
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const currentTrackIdRef = useRef<number | null>(null); // 跟踪当前加载的曲目ID
+  const isInitialLoadRef = useRef<boolean>(false); // 跟踪是否是初始加载
+  const playlistRef = useRef<MusicTrack[]>([]); // 使用 ref 存储播放列表，避免触发 useEffect
 
   // Dragging State
   const [position, setPosition] = useState({ x: 24, y: typeof window !== 'undefined' ? window.innerHeight - 120 : 500 });
@@ -35,29 +38,46 @@ const MusicPlayer: React.FC = () => {
                       const validMusic = res.data.filter((track: MusicTrack) => 
                           track && track.id != null && track.id !== undefined
                       );
-                      setPlaylist(validMusic);
+                      // 只有当播放列表真正改变时才更新（比较ID数组）
+                      setPlaylist(prev => {
+                          const prevIds = prev.map(t => t.id).sort().join(',');
+                          const newIds = validMusic.map(t => t.id).sort().join(',');
+                          if (prevIds === newIds && prev.length === validMusic.length) {
+                              // 数据相同，不更新状态，避免触发重新加载
+                              // 但需要更新 ref 中的内容（可能对象属性有变化）
+                              playlistRef.current = validMusic;
+                              return prev;
+                          }
+                          // 更新 ref 和状态
+                          playlistRef.current = validMusic;
+                          return validMusic;
+                      });
                   } else {
+                      playlistRef.current = [];
                       setPlaylist([]);
                   }
               } else {
                   console.warn("Failed to fetch music:", res.message);
+                  playlistRef.current = [];
                   setPlaylist([]);
               }
           } else {
               console.warn("Music API returned non-OK status:", response.status);
+              playlistRef.current = [];
               setPlaylist([]);
           }
       } catch (e) {
           console.warn("Failed to fetch music from backend:", e);
           // 不再使用默认音乐，直接设置为空列表
+          playlistRef.current = [];
           setPlaylist([]);
       }
   };
 
   useEffect(() => {
     fetchMusic();
-    // 每10秒自动刷新一次，确保新添加的音乐能显示
-    const interval = setInterval(fetchMusic, 10000);
+    // 每30秒自动刷新一次，确保新添加的音乐能显示（减少刷新频率，避免影响播放）
+    const interval = setInterval(fetchMusic, 30000);
     // 监听页面可见性变化，当页面重新可见时刷新
     const handleVisibilityChange = () => {
       if (!document.hidden) {
@@ -71,22 +91,63 @@ const MusicPlayer: React.FC = () => {
     };
   }, []);
 
-  // Initialize Audio
+  // Initialize Audio - 只依赖 currentIndex，不依赖 playlist，避免每10秒刷新导致重新加载
   useEffect(() => {
-      if (playlist.length === 0) return;
+      // 使用 ref 获取最新的播放列表，而不是依赖 state
+      const currentPlaylist = playlistRef.current.length > 0 ? playlistRef.current : playlist;
+      if (currentPlaylist.length === 0) return;
 
       if (!audioRef.current) {
           audioRef.current = new Audio();
           // Ensure cross-origin is set if needed, though mostly for canvas visualization
           audioRef.current.crossOrigin = "anonymous";
+          // 设置预加载策略，优化网络慢的情况
+          audioRef.current.preload = "auto";
       }
 
       const audio = audioRef.current;
-      const currentTrack = playlist[currentIndex];
+      const currentTrack = currentPlaylist[currentIndex];
       if (!currentTrack) {
           console.warn("No current track available");
           return;
       }
+
+      // 如果当前曲目ID没有变化，且音频已经在加载/播放，不重新加载
+      const currentTrackId = currentTrack.id || 0;
+      if (currentTrackIdRef.current === currentTrackId && audio.src) {
+          // 检查是否是同一个URL（避免重复加载）
+          const normalizeUrl = (url: string): string => {
+              if (!url) return '';
+              try {
+                  if (url.startsWith('http://') || url.startsWith('https://')) {
+                      return new URL(url).pathname + (new URL(url).search || '');
+                  }
+                  return url;
+              } catch {
+                  return url;
+              }
+          };
+          
+          const currentSrc = audio.src || '';
+          let trackUrl = '';
+          if (currentTrack.url && currentTrack.url.trim() !== '') {
+              trackUrl = currentTrack.url;
+          } else if (currentTrack.id) {
+              trackUrl = `/api/music/stream/${currentTrack.id}`;
+          }
+          
+          const normalizedCurrentSrc = normalizeUrl(currentSrc);
+          const normalizedTrackUrl = normalizeUrl(trackUrl);
+          
+          // 如果是同一首歌曲且URL相同，不重新加载
+          if (normalizedCurrentSrc === normalizedTrackUrl) {
+              return;
+          }
+      }
+      
+      // 更新当前曲目ID
+      currentTrackIdRef.current = currentTrackId;
+      isInitialLoadRef.current = true;
 
       // 如果当前音乐已经失败，直接跳过（避免无限循环）
       if (failedTracksRef.current.has(currentTrack.id || 0)) {
@@ -95,9 +156,9 @@ const MusicPlayer: React.FC = () => {
           const skipTimer = setTimeout(() => {
               let attempts = 0;
               let nextIndex = currentIndex;
-              while (attempts < playlist.length) {
-                  nextIndex = (nextIndex + 1) % playlist.length;
-                  const nextTrack = playlist[nextIndex];
+              while (attempts < currentPlaylist.length) {
+                  nextIndex = (nextIndex + 1) % currentPlaylist.length;
+                  const nextTrack = currentPlaylist[nextIndex];
                   if (nextTrack && !failedTracksRef.current.has(nextTrack.id || 0)) {
                       setCurrentIndex(nextIndex);
                       return;
@@ -131,13 +192,13 @@ const MusicPlayer: React.FC = () => {
           failedTracksRef.current.add(trackId);
           
           // 如果当前音乐无法播放，尝试下一首未失败的音乐
-          if (playlist.length > 1) {
+          if (currentPlaylist.length > 1) {
               setTimeout(() => {
                   let attempts = 0;
                   let nextIndex = currentIndex;
-                  while (attempts < playlist.length) {
-                      nextIndex = (nextIndex + 1) % playlist.length;
-                      const nextTrack = playlist[nextIndex];
+                  while (attempts < currentPlaylist.length) {
+                      nextIndex = (nextIndex + 1) % currentPlaylist.length;
+                      const nextTrack = currentPlaylist[nextIndex];
                       if (nextTrack && !failedTracksRef.current.has(nextTrack.id || 0)) {
                           console.log(`Trying next track: ${nextTrack.title} (index ${nextIndex})`);
                           setCurrentIndex(nextIndex);
@@ -179,7 +240,7 @@ const MusicPlayer: React.FC = () => {
                   failedTracksRef.current.add(trackId);
                   
                   // 检查是否所有音乐都失败了
-                  const allFailed = playlist.every(track => failedTracksRef.current.has(track.id || 0));
+                  const allFailed = currentPlaylist.every(track => failedTracksRef.current.has(track.id || 0));
                   if (allFailed) {
                       console.warn("All tracks failed to load, stopping playback");
                       setIsPlaying(false);
@@ -190,9 +251,9 @@ const MusicPlayer: React.FC = () => {
                   setTimeout(() => {
                       let attempts = 0;
                       let nextIndex = currentIndex;
-                      while (attempts < playlist.length) {
-                          nextIndex = (nextIndex + 1) % playlist.length;
-                          const nextTrack = playlist[nextIndex];
+                      while (attempts < currentPlaylist.length) {
+                          nextIndex = (nextIndex + 1) % currentPlaylist.length;
+                          const nextTrack = currentPlaylist[nextIndex];
                           if (nextTrack && !failedTracksRef.current.has(nextTrack.id || 0)) {
                               console.log(`Trying next track: ${nextTrack.title} (index ${nextIndex})`);
                               setCurrentIndex(nextIndex);
@@ -212,8 +273,9 @@ const MusicPlayer: React.FC = () => {
       };
 
       const handleCanPlay = () => {
-          // 当音频可以播放时，如果之前是播放状态，继续播放
-          if (isPlaying) {
+          // 当音频可以播放时，如果之前是播放状态且音频当前已暂停，才继续播放
+          // 避免在音频已经在播放时重复调用 play()，导致重新开始
+          if (isPlaying && audio.paused && isInitialLoadRef.current) {
               const playPromise = audio.play();
               if (playPromise !== undefined) {
                   playPromise.catch(error => {
@@ -222,20 +284,69 @@ const MusicPlayer: React.FC = () => {
                   });
               }
           }
+          isInitialLoadRef.current = false; // 标记初始加载完成
       };
 
       const handleLoadStart = () => {
           console.log("Audio loading started for:", trackUrl);
+          isInitialLoadRef.current = true; // 标记开始加载
+      };
+
+      // 处理网络缓冲：当音频因为缓冲不足而暂停时，不要重置播放位置
+      const handleWaiting = () => {
+          // 网络慢导致缓冲不足，等待缓冲完成
+          console.log("Audio waiting for buffer...");
+      };
+
+      const handleStalled = () => {
+          // 网络停滞，但不要重置播放
+          console.log("Audio stalled, waiting...");
+      };
+
+      const handleCanPlayThrough = () => {
+          // 整个音频文件可以播放完成，确保播放状态
+          if (isPlaying && audio.paused) {
+              const playPromise = audio.play();
+              if (playPromise !== undefined) {
+                  playPromise.catch(error => {
+                      console.log("Audio play error after canplaythrough:", error);
+                  });
+              }
+          }
       };
 
       audio.addEventListener('timeupdate', handleTimeUpdate);
       audio.addEventListener('ended', handleEnded);
       audio.addEventListener('error', handleError);
       audio.addEventListener('canplay', handleCanPlay);
+      audio.addEventListener('canplaythrough', handleCanPlayThrough);
       audio.addEventListener('loadstart', handleLoadStart);
+      audio.addEventListener('waiting', handleWaiting);
+      audio.addEventListener('stalled', handleStalled);
 
       // Only update src if changed to prevent reloading on re-renders
-      if (audio.src !== trackUrl) {
+      // 规范化URL比较：提取路径部分进行比较，避免绝对URL和相对URL比较失败
+      const normalizeUrl = (url: string): string => {
+          if (!url) return '';
+          try {
+              // 如果是完整URL，提取路径部分
+              if (url.startsWith('http://') || url.startsWith('https://')) {
+                  return new URL(url).pathname + (new URL(url).search || '');
+              }
+              // 如果是相对路径，直接返回
+              return url;
+          } catch {
+              // 如果解析失败，返回原URL
+              return url;
+          }
+      };
+      
+      const currentSrc = audio.src || '';
+      const normalizedCurrentSrc = normalizeUrl(currentSrc);
+      const normalizedTrackUrl = normalizeUrl(trackUrl);
+      
+      // 只有当URL真正不同时才重新加载
+      if (normalizedCurrentSrc !== normalizedTrackUrl) {
           console.log("Loading new track:", trackUrl);
           audio.src = trackUrl;
           audio.load(); // Critical for some browsers after src change
@@ -246,9 +357,12 @@ const MusicPlayer: React.FC = () => {
           audio.removeEventListener('ended', handleEnded);
           audio.removeEventListener('error', handleError);
           audio.removeEventListener('canplay', handleCanPlay);
+          audio.removeEventListener('canplaythrough', handleCanPlayThrough);
           audio.removeEventListener('loadstart', handleLoadStart);
+          audio.removeEventListener('waiting', handleWaiting);
+          audio.removeEventListener('stalled', handleStalled);
       }
-  }, [playlist, currentIndex]);
+  }, [currentIndex]); // 只依赖 currentIndex，不依赖 playlist，避免每10秒刷新导致重新加载
 
   // Handle Play/Pause Toggle
   useEffect(() => {
@@ -313,6 +427,8 @@ const MusicPlayer: React.FC = () => {
           return;
       }
       const nextIndex = (currentIndex + 1) % playlist.length;
+      currentTrackIdRef.current = null; // 重置当前曲目ID，允许重新加载
+      isInitialLoadRef.current = false; // 重置初始加载标志
       setCurrentIndex(nextIndex);
       setIsPlaying(true);
   };
@@ -325,6 +441,8 @@ const MusicPlayer: React.FC = () => {
           }
           return;
       }
+      currentTrackIdRef.current = null; // 重置当前曲目ID，允许重新加载
+      isInitialLoadRef.current = false; // 重置初始加载标志
       setCurrentIndex((prev) => (prev - 1 + playlist.length) % playlist.length);
       setIsPlaying(true);
   };

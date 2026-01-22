@@ -371,6 +371,10 @@ const PostEditor: React.FC<PostEditorProps> = ({
               value={title}
               onChange={e => setTitle(e.target.value)}
               className="w-full bg-anime-card/60 border border-anime-text/10 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-anime-accent/50 text-lg font-bold text-anime-text placeholder-anime-text/40"
+              style={{ 
+                backgroundColor: 'var(--color-card-bg)',
+                color: 'var(--color-text)'
+              }}
               placeholder="Enter a catchy title..."
               required
             />
@@ -392,10 +396,14 @@ const PostEditor: React.FC<PostEditorProps> = ({
                       }
                     }}
                     className="w-full bg-anime-card/60 border border-anime-text/10 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-anime-accent/50 appearance-none cursor-pointer pr-10 text-anime-text"
+                    style={{ 
+                      backgroundColor: 'var(--color-card-bg)',
+                      color: 'var(--color-text)'
+                    }}
                   >
-                    <option value="">-- Select Existing Category --</option>
+                    <option value="" style={{ backgroundColor: 'var(--color-card-bg)', color: 'var(--color-text)' }}>-- Select Existing Category --</option>
                     {availableCategories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
+                      <option key={cat} value={cat} style={{ backgroundColor: 'var(--color-card-bg)', color: 'var(--color-text)' }}>{cat}</option>
                     ))}
                   </select>
                   <Layout className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-anime-text/40" size={18} />
@@ -430,6 +438,10 @@ const PostEditor: React.FC<PostEditorProps> = ({
                         }
                       }}
                   className="w-full bg-anime-card/60 border border-anime-text/10 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-anime-accent/50 text-anime-text placeholder-anime-text/40"
+                  style={{ 
+                    backgroundColor: 'var(--color-card-bg)',
+                    color: 'var(--color-text)'
+                  }}
                       placeholder="Type category name..."
                   required
                 />
@@ -491,10 +503,14 @@ const PostEditor: React.FC<PostEditorProps> = ({
                       e.target.value = ''; // 重置选择
                     }}
                     className="w-full bg-anime-card/60 border border-anime-text/10 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-anime-accent/50 appearance-none cursor-pointer pr-10 text-anime-text"
+                    style={{ 
+                      backgroundColor: 'var(--color-card-bg)',
+                      color: 'var(--color-text)'
+                    }}
                   >
-                    <option value="">-- Select Existing Tag --</option>
+                    <option value="" style={{ backgroundColor: 'var(--color-card-bg)', color: 'var(--color-text)' }}>-- Select Existing Tag --</option>
                     {allAvailableTags.filter(t => !selectedTags.includes(t)).map(tag => (
-                      <option key={tag} value={tag}>{tag}</option>
+                      <option key={tag} value={tag} style={{ backgroundColor: 'var(--color-card-bg)', color: 'var(--color-text)' }}>{tag}</option>
                     ))}
                   </select>
                   <Hash className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-anime-text/40" size={18} />
@@ -518,6 +534,10 @@ const PostEditor: React.FC<PostEditorProps> = ({
                       }
                     }}
                     className="flex-grow bg-anime-card/60 border border-anime-text/10 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-anime-accent/50 text-anime-text placeholder-anime-text/40"
+                    style={{ 
+                      backgroundColor: 'var(--color-card-bg)',
+                      color: 'var(--color-text)'
+                    }}
                     placeholder="Type tag name and press Enter or click outside..."
                   />
                   {tagInput.trim() && 
@@ -542,6 +562,10 @@ const PostEditor: React.FC<PostEditorProps> = ({
                   value={imageUrl}
                   onChange={e => setImageUrl(e.target.value)}
                   className="flex-grow bg-anime-card/60 border border-anime-text/10 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-anime-accent/50 text-sm font-mono text-anime-text placeholder-anime-text/40"
+                  style={{ 
+                    backgroundColor: 'var(--color-card-bg)',
+                    color: 'var(--color-text)'
+                  }}
                   placeholder="https://..."
                 />
                 <div className="w-12 h-12 rounded-lg overflow-hidden border border-anime-text/10 shrink-0 bg-anime-card">
@@ -559,6 +583,10 @@ const PostEditor: React.FC<PostEditorProps> = ({
                value={excerpt}
                onChange={e => setExcerpt(e.target.value)}
                className="w-full bg-anime-card/60 border border-anime-text/10 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-anime-accent/50 min-h-[80px] resize-none text-anime-text placeholder-anime-text/40"
+               style={{ 
+                 backgroundColor: 'var(--color-card-bg)',
+                 color: 'var(--color-text)'
+               }}
                placeholder="A brief summary shown on the card..."
                required
              />
@@ -1006,7 +1034,9 @@ const PostEditor: React.FC<PostEditorProps> = ({
                        whiteSpace: 'pre',
                        wordWrap: 'normal',
                        overflowWrap: 'normal',
-                       minHeight: viewMode === 'split' ? '0' : '400px'
+                       minHeight: viewMode === 'split' ? '0' : '400px',
+                       backgroundColor: 'var(--color-card-bg)',
+                       color: 'var(--color-text)'
                      }}
                      placeholder="# Title&#10;&#10;Write your story in Markdown...&#10;&#10;- Use **bold** for emphasis&#10;- Use ![alt](url) for images&#10;- Use `code` for inline code&#10;&#10;Tip: Press Enter to create a new line, Ctrl+Z to undo"
                      required
@@ -1030,27 +1060,51 @@ const PostEditor: React.FC<PostEditorProps> = ({
                      style={{ minHeight: viewMode === 'split' ? '0' : '400px' }}
                    >
                      {content ? (
-                       <div className="prose prose-sm max-w-none prose-headings:text-anime-text prose-p:text-anime-text/80 prose-strong:text-anime-accent prose-a:text-anime-secondary prose-code:text-anime-accent prose-pre:bg-anime-bg prose-pre:text-anime-text">
-                         <ReactMarkdown
-                           remarkPlugins={[remarkGfm]}
-                           rehypePlugins={[rehypeRaw]}
-                           components={{
-                             code({ node, inline, className, children, ...props }: any) {
-                               return (
-                                 <CodeBlock
-                                   inline={inline}
-                                   className={className}
-                                   {...props}
-                                 >
-                                   {children}
-                                 </CodeBlock>
-                               );
-                             },
-                           }}
-                         >
-                           {content}
-                         </ReactMarkdown>
-                       </div>
+                       (() => {
+                         // 检测是否是完整的HTML文档
+                         const trimmedContent = content.trim();
+                         const isFullHTML = trimmedContent.startsWith('<!DOCTYPE') || 
+                                           (trimmedContent.startsWith('<html') && trimmedContent.includes('</html>'));
+                         
+                         if (isFullHTML) {
+                           // 直接渲染HTML内容
+                           return (
+                             <div 
+                               className="w-full h-full"
+                               dangerouslySetInnerHTML={{ __html: content }}
+                               style={{ 
+                                 isolation: 'isolate',
+                                 overflow: 'auto'
+                               }}
+                             />
+                           );
+                         }
+                         
+                         // 使用Markdown渲染
+                         return (
+                           <div className="prose prose-sm max-w-none prose-headings:text-anime-text prose-p:text-anime-text/80 prose-strong:text-anime-accent prose-a:text-anime-secondary prose-code:text-anime-accent prose-pre:bg-anime-bg prose-pre:text-anime-text">
+                             <ReactMarkdown
+                               remarkPlugins={[remarkGfm]}
+                               rehypePlugins={[rehypeRaw]}
+                               components={{
+                                 code({ node, inline, className, children, ...props }: any) {
+                                   return (
+                                     <CodeBlock
+                                       inline={inline}
+                                       className={className}
+                                       {...props}
+                                     >
+                                       {children}
+                                     </CodeBlock>
+                                   );
+                                 },
+                               }}
+                             >
+                               {content}
+                             </ReactMarkdown>
+                           </div>
+                         );
+                       })()
                      ) : (
                        <p className="text-anime-text/40 text-sm">Preview will appear here...</p>
                      )}

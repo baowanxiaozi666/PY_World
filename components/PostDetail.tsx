@@ -522,27 +522,51 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
             </div>
           </div>
 
-          <div className="prose prose-lg prose-headings:text-anime-text prose-p:text-anime-text/80 prose-strong:text-anime-accent prose-a:text-anime-secondary prose-code:text-anime-accent prose-pre:bg-anime-bg prose-pre:text-anime-text prose-img:rounded-xl prose-img:shadow-lg max-w-none leading-relaxed font-sans">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
-              components={{
-                code({ node, inline, className, children, ...props }: any) {
-                  return (
-                    <CodeBlock
-                      inline={inline}
-                      className={className}
-                      {...props}
-                    >
-                      {children}
-                    </CodeBlock>
-                  );
-                },
-              }}
-            >
-              {post.content}
-            </ReactMarkdown>
-          </div>
+          {(() => {
+            // 检测是否是完整的HTML文档
+            const trimmedContent = post.content.trim();
+            const isFullHTML = trimmedContent.startsWith('<!DOCTYPE') || 
+                              (trimmedContent.startsWith('<html') && trimmedContent.includes('</html>'));
+            
+            if (isFullHTML) {
+              // 直接渲染HTML内容
+              return (
+                <div 
+                  className="w-full"
+                  dangerouslySetInnerHTML={{ __html: post.content }}
+                  style={{ 
+                    isolation: 'isolate',
+                    minHeight: '400px'
+                  }}
+                />
+              );
+            }
+            
+            // 使用Markdown渲染
+            return (
+              <div className="prose prose-lg prose-headings:text-anime-text prose-p:text-anime-text/80 prose-strong:text-anime-accent prose-a:text-anime-secondary prose-code:text-anime-accent prose-pre:bg-anime-bg prose-pre:text-anime-text prose-img:rounded-xl prose-img:shadow-lg max-w-none leading-relaxed font-sans">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                  components={{
+                    code({ node, inline, className, children, ...props }: any) {
+                      return (
+                        <CodeBlock
+                          inline={inline}
+                          className={className}
+                          {...props}
+                        >
+                          {children}
+                        </CodeBlock>
+                      );
+                    },
+                  }}
+                >
+                  {post.content}
+                </ReactMarkdown>
+              </div>
+            );
+          })()}
           
           <div className="mt-12 pt-8 border-t border-anime-text/10">
             <h3 className="font-bold text-anime-text mb-4">Related Tags</h3>

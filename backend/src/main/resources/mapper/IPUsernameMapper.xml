@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sakuraverse.backend.mapper.IPUsernameMapper">
+
+    <resultMap id="IPUsernameResultMap" type="com.sakuraverse.backend.entity.IPUsername">
+        <id property="id" column="id"/>
+        <result property="ipAddress" column="ip_address"/>
+        <result property="username" column="username"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="selectByIP" resultMap="IPUsernameResultMap">
+        SELECT * FROM sys_ip_username WHERE ip_address = #{ipAddress}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_ip_username (ip_address, username, create_time, update_time)
+        VALUES (#{ipAddress}, #{username}, NOW(), NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE sys_ip_username
+        SET username = #{username}, update_time = NOW()
+        WHERE ip_address = #{ipAddress}
+    </update>
+
+</mapper>

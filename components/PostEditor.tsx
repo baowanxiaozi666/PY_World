@@ -334,8 +334,19 @@ const PostEditor: React.FC<PostEditorProps> = ({
   };
 
   return (
-    <div className="animate-fade-in max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="animate-fade-in" style={{ 
+      width: '100vw', 
+      maxWidth: '100vw',
+      marginLeft: 'calc(-50vw + 50%)',
+      marginRight: 'calc(-50vw + 50%)',
+      height: 'calc(100vh - 60px)', 
+      display: 'flex', 
+      flexDirection: 'column',
+      paddingLeft: '0.5vw',
+      paddingRight: '0.5vw',
+      boxSizing: 'border-box'
+    }}>
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <button 
           onClick={onCancel}
           className="flex items-center gap-2 text-anime-text hover:text-anime-accent transition-colors"
@@ -347,11 +358,11 @@ const PostEditor: React.FC<PostEditorProps> = ({
         </h2>
       </div>
 
-      <div className="bg-anime-card backdrop-blur-md rounded-3xl p-8 border border-anime-accent/20 shadow-xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          
-          {/* Title */}
-          <div className="space-y-2">
+      <div className="bg-anime-card backdrop-blur-md rounded-3xl p-3 border border-anime-accent/20 shadow-xl flex-1 overflow-hidden flex flex-col">
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden min-h-0">
+          <div className="space-y-2 shrink-0" style={{ flexShrink: 0 }}>
+            {/* Title */}
+            <div className="space-y-2">
             <label className="text-sm font-bold text-anime-text/80 flex items-center gap-2">
               <Type size={16} /> Title
             </label>
@@ -551,11 +562,12 @@ const PostEditor: React.FC<PostEditorProps> = ({
                placeholder="A brief summary shown on the card..."
                required
              />
+            </div>
           </div>
 
           {/* Content - Markdown Editor */}
-          <div className="space-y-2">
-             <div className="flex items-center justify-between">
+          <div className="flex-1 flex flex-col min-h-0" style={{ minHeight: '40vh' }}>
+             <div className="flex items-center justify-between mb-2 shrink-0">
              <label className="text-sm font-bold text-anime-text/80 flex items-center gap-2">
                  <Layout size={16} /> Content (Markdown Supported)
                </label>
@@ -963,18 +975,39 @@ const PostEditor: React.FC<PostEditorProps> = ({
                </div>
              )}
 
-             {/* 编辑器/预览区域 */}
-             <div className={`grid gap-4 ${viewMode === 'split' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+             {/* 编辑器/预览区域 - 各占整个屏幕的一半 */}
+             <div 
+               className={`flex gap-4 flex-1 ${viewMode === 'split' ? 'flex-row' : 'flex-col'}`} 
+               style={{ 
+                 minHeight: 0
+               }}
+             >
                {/* 编辑区域 */}
                {(viewMode === 'edit' || viewMode === 'split') && (
-                 <div className="space-y-2">
+                 <div 
+                   className={`space-y-2 ${viewMode === 'split' ? 'flex-1 w-1/2' : 'w-full'}`} 
+                   style={{ 
+                     height: viewMode === 'split' ? '100%' : 'auto',
+                     display: 'flex',
+                     flexDirection: 'column'
+                   }}
+                 >
+                   <div className="text-xs text-anime-text/60 mb-2 font-medium shrink-0">Editor</div>
                    <textarea 
                      ref={contentTextareaRef}
                      name="content"
                      value={content}
                      onChange={e => setContent(e.target.value)}
                      onKeyDown={handleKeyDown}
-                     className="w-full bg-anime-card/60 border border-anime-text/10 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-anime-accent/50 min-h-[400px] font-mono text-sm leading-relaxed resize-y text-anime-text placeholder-anime-text/40"
+                     className="w-full flex-1 bg-anime-card/60 border border-anime-text/10 rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-anime-accent/50 font-mono text-sm leading-relaxed resize-none text-anime-text placeholder-anime-text/40 whitespace-pre"
+                     style={{ 
+                       tabSize: 2,
+                       fontFamily: 'monospace',
+                       whiteSpace: 'pre',
+                       wordWrap: 'normal',
+                       overflowWrap: 'normal',
+                       minHeight: viewMode === 'split' ? '0' : '400px'
+                     }}
                      placeholder="# Title&#10;&#10;Write your story in Markdown...&#10;&#10;- Use **bold** for emphasis&#10;- Use ![alt](url) for images&#10;- Use `code` for inline code&#10;&#10;Tip: Press Enter to create a new line, Ctrl+Z to undo"
                      required
                    />
@@ -983,15 +1016,26 @@ const PostEditor: React.FC<PostEditorProps> = ({
 
                {/* 预览区域 */}
                {(viewMode === 'preview' || viewMode === 'split') && (
-                 <div className="space-y-2">
-                   <div className="bg-anime-card/60 border border-anime-text/10 rounded-xl py-3 px-4 min-h-[400px] overflow-y-auto text-anime-text">
+                 <div 
+                   className={`space-y-2 ${viewMode === 'split' ? 'flex-1 w-1/2' : 'w-full'}`} 
+                   style={{ 
+                     height: viewMode === 'split' ? '100%' : 'auto',
+                     display: 'flex',
+                     flexDirection: 'column'
+                   }}
+                 >
+                   <div className="text-xs text-anime-text/60 mb-2 font-medium shrink-0">Preview</div>
+                   <div 
+                     className="bg-anime-card/60 border border-anime-text/10 rounded-xl py-3 px-4 overflow-y-auto text-anime-text flex-1" 
+                     style={{ minHeight: viewMode === 'split' ? '0' : '400px' }}
+                   >
                      {content ? (
                        <div className="prose prose-sm max-w-none prose-headings:text-anime-text prose-p:text-anime-text/80 prose-strong:text-anime-accent prose-a:text-anime-secondary prose-code:text-anime-accent prose-pre:bg-anime-bg prose-pre:text-anime-text">
                          <ReactMarkdown
                            remarkPlugins={[remarkGfm]}
                            rehypePlugins={[rehypeRaw]}
                            components={{
-                             code({ node, inline, className, children, ...props }) {
+                             code({ node, inline, className, children, ...props }: any) {
                                return (
                                  <CodeBlock
                                    inline={inline}
@@ -1014,7 +1058,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                  </div>
                )}
              </div>
-             <p className="text-xs text-anime-text/50">
+             <p className="text-xs text-anime-text/50 shrink-0 mt-2">
                        Tip: Use Markdown syntax for formatting. Click "Upload Image" to insert images, or use <code className="bg-anime-card/40 px-1 rounded text-anime-text">![alt](url)</code> syntax.
              </p>
           </div>

@@ -9,7 +9,7 @@
 #### 只需将本项目整体克隆到本地，并下面步骤部署
 ### 1. 前端部署命令
 ```
-cd /www/wwwroot/pangyan_world
+cd frontend
 npm create vite@latest frontend -- --template react-ts
 npm install lucide-react react-router-dom axios date-fns
 npm install -D tailwindcss postcss autoprefixer 

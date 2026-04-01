@@ -34,7 +34,7 @@ deepseek:
   api:
     # 替换为你的 DeepSeek API Key，或在环境变量中设置 DEEPSEEK_API_KEY
     # 从环境变量读取，如果没有则使用默认值（请替换为你的真实 API Key）
-    key: ${DEEPSEEK_API_KEY:sk-e10d9e3f4e6141be8f77c076c6b72514}
+    key: ${DEEPSEEK_API_KEY:****************}
     url: https://api.deepseek.com/chat/completions
     model: deepseek-chat
     timeout: 60 

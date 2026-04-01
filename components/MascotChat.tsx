@@ -35,16 +35,31 @@ const MascotChat: React.FC = () => {
       if (saved) {
         try {
           const { position: savedPos, size: savedSize } = JSON.parse(saved);
-          if (savedPos) setPosition(savedPos);
+          if (savedPos) {
+            // Validate and clamp position to ensure it's visible
+            const maxX = window.innerWidth - (savedSize?.width || 384);
+            const maxY = window.innerHeight - (savedSize?.height || 600);
+            setPosition({ 
+              x: Math.max(0, Math.min(savedPos.x, maxX)),
+              y: Math.max(0, Math.min(savedPos.y, maxY))
+            });
+          }
           if (savedSize) setSize(savedSize);
         } catch (e) {
           console.warn('Failed to load chat window state:', e);
+          // Fallback to default position
+          setPosition({ 
+            x: Math.max(0, window.innerWidth - 400), 
+            y: Math.max(0, window.innerHeight - 650) 
+          });
         }
       } else {
-        // Default position: bottom-right
+        // Default position: bottom-right, ensure it's within viewport
+        const defaultWidth = 384;
+        const defaultHeight = 600;
         setPosition({ 
-          x: window.innerWidth - 400, 
-          y: window.innerHeight - 650 
+          x: Math.max(0, window.innerWidth - defaultWidth - 24), 
+          y: Math.max(0, window.innerHeight - defaultHeight - 24) 
         });
       }
     }
@@ -184,7 +199,8 @@ const MascotChat: React.FC = () => {
     <>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 flex items-center justify-center
+        style={{ zIndex: 60 }}
+        className={`fixed bottom-6 right-6 p-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 flex items-center justify-center
           ${isOpen ? 'bg-anime-card text-anime-text rotate-90' : 'bg-gradient-to-r from-anime-accent to-anime-secondary text-white animate-bounce-slow'}
         `}
       >
@@ -193,7 +209,7 @@ const MascotChat: React.FC = () => {
 
       <div 
         ref={chatWindowRef}
-        className={`fixed bg-anime-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-anime-accent/20 z-40 overflow-hidden transition-all duration-300
+        className={`fixed bg-anime-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-anime-accent/20 overflow-hidden transition-all duration-300
           ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}
           ${isDragging ? 'cursor-move' : ''}
         `}
@@ -202,6 +218,7 @@ const MascotChat: React.FC = () => {
           top: `${position.y}px`,
           width: `${size.width}px`,
           height: `${size.height}px`,
+          zIndex: 55,
         }}
       >
         {/* Drag Handle - Header Area */}

@@ -9,10 +9,10 @@ spring:
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
   
-  sql:
-    init:
-      mode: always
-      encoding: UTF-8
+#  sql:
+#    init:
+#      mode: always
+#      encoding: UTF-8
 
 
   redis:

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My World - 功能介绍文档</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .content {
+            padding: 50px 40px;
+        }
+        .section {
+            margin-bottom: 50px;
+        }
+        .section-title {
+            font-size: 1.8em;
+            color: #667eea;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .subsection {
+            margin-bottom: 30px;
+        }
+        .subsection-title {
+            font-size: 1.3em;
+            color: #555;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .feature-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .feature-list li {
+            padding: 12px 0 12px 30px;
+            position: relative;
+            color: #555;
+        }
+        .feature-list li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .feature-list ul {
+            list-style: none;
+            padding-left: 20px;
+            margin-top: 8px;
+        }
+        .feature-list ul li:before {
+            content: "•";
+            font-size: 1em;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .tech-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 500;
+            color: #555;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .tech-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 30px 40px;
+            text-align: center;
+            color: #666;
+            font-size: 0.95em;
+        }
+        @media (max-width: 768px) {
+            .header { padding: 40px 30px; }
+            .header h1 { font-size: 2em; }
+            .content { padding: 30px 25px; }
+            .section-title { font-size: 1.5em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📖 My World - 功能介绍文档</h1>
+            <p>"My World" 是一个现代化的个人博客系统，集成了博客发布、音乐播放、AI聊天助手、评论互动等多种功能。网站采用前后端分离架构，提供美观的界面和流畅的用户体验。</p>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2 class="section-title">🎯 核心功能</h2>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">1. 博客文章系统</h3>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">1.1 文章浏览</h4>
+                    <ul class="feature-list">
+                        <li><strong>首页展示</strong>：以卡片形式展示所有博客文章</li>
+                        <li><strong>文章详情</strong>：点击文章卡片可查看完整内容</li>
+                        <li><strong>分类筛选</strong>：支持按分类浏览文章</li>
+                        <li><strong>标签筛选</strong>：支持按标签筛选文章</li>
+                        <li><strong>搜索功能</strong>：支持关键词搜索文章标题和内容</li>
+                        <li><strong>排序功能</strong>：支持按最新、最热、点赞数排序</li>
+                    </ul>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">1.2 文章内容</h4>
+                    <ul class="feature-list">
+                        <li><strong>Markdown支持</strong>：支持Markdown语法编写文章</li>
+                        <li><strong>HTML渲染</strong>：支持在Markdown中嵌入HTML代码</li>
+                        <li><strong>代码高亮</strong>：代码块支持语法高亮，适配明暗两种主题</li>
+                        <li><strong>图片展示</strong>：支持封面图片和文章内图片</li>
+                        <li><strong>摘要显示</strong>：文章卡片显示摘要信息</li>
+                    </ul>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">1.3 文章互动</h4>
+                    <ul class="feature-list">
+                        <li><strong>点赞功能</strong>：支持对文章进行点赞/取消点赞</li>
+                        <li><strong>评论系统</strong>：
+                            <ul>
+                                <li>支持多级评论（评论和回复）</li>
+                                <li>游客可发表评论和回复</li>
+                                <li>登录用户显示为"The Developer"，使用特殊头像</li>
+                                <li>管理员可删除任何评论</li>
+                                <li>游客无法删除评论</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">2. 词云可视化</h3>
+                    <ul class="feature-list">
+                        <li><strong>动态词云</strong>：首页显示关键词词云</li>
+                        <li><strong>数据来源</strong>：基于Elasticsearch聚合文章标签生成</li>
+                        <li><strong>交互效果</strong>：词云具有动画效果，点击可筛选文章</li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">3. 音乐播放器</h3>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">3.1 播放功能</h4>
+                    <ul class="feature-list">
+                        <li><strong>播放列表</strong>：自动加载所有音乐</li>
+                        <li><strong>播放控制</strong>：播放/暂停、上一首/下一首</li>
+                        <li><strong>进度控制</strong>：支持拖拽进度条</li>
+                        <li><strong>自动播放</strong>：支持自动播放下一首</li>
+                        <li><strong>循环播放</strong>：支持单曲循环和列表循环</li>
+                        <li><strong>Range请求支持</strong>：支持音频拖拽和Safari浏览器兼容</li>
+                    </ul>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">3.2 音乐管理（管理员）</h4>
+                    <ul class="feature-list">
+                        <li><strong>上传音乐</strong>：支持上传MP3等音频文件（最大200MB）</li>
+                        <li><strong>文件存储</strong>：音乐文件存储在服务器文件系统（./Music/目录）</li>
+                        <li><strong>音乐信息</strong>：可设置标题、艺术家、封面图片</li>
+                        <li><strong>删除音乐</strong>：支持删除音乐（同时删除文件系统中的文件）</li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">4. AI聊天助手（阿尼亚）</h3>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">4.1 聊天功能</h4>
+                    <ul class="feature-list">
+                        <li><strong>智能对话</strong>：基于DeepSeek API的AI助手</li>
+                        <li><strong>角色设定</strong>：AI助手名为"阿尼亚"，负责守护界面</li>
+                        <li><strong>个性化头像</strong>：使用自定义头像图片</li>
+                        <li><strong>欢迎消息</strong>：打开聊天窗口显示欢迎语</li>
+                    </ul>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">4.2 界面特性</h4>
+                    <ul class="feature-list">
+                        <li><strong>可移动窗口</strong>：支持拖拽移动聊天窗口</li>
+                        <li><strong>可调整大小</strong>：支持鼠标拖拽调整窗口大小</li>
+                        <li><strong>位置记忆</strong>：窗口位置和大小自动保存到localStorage</li>
+                        <li><strong>主题适配</strong>：完美适配明暗两种主题模式</li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">5. 主题系统</h3>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">5.1 双主题模式</h4>
+                    <ul class="feature-list">
+                        <li><strong>暗黑模式（Sakura）</strong>：深海风格，深色背景配浅色文字</li>
+                        <li><strong>明亮模式（Cyber）</strong>：海蓝风格，浅色背景配深色文字</li>
+                    </ul>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">5.2 主题特性</h4>
+                    <ul class="feature-list">
+                        <li><strong>自动切换</strong>：根据时间自动切换（20:00-07:00为暗黑模式）</li>
+                        <li><strong>手动切换</strong>：支持手动切换主题</li>
+                        <li><strong>持久化存储</strong>：主题选择保存到localStorage</li>
+                        <li><strong>全局适配</strong>：所有组件完美适配两种主题</li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">6. 背景效果</h3>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">6.1 视频背景</h4>
+                    <ul class="feature-list">
+                        <li><strong>动态视频</strong>：支持视频背景（可选）</li>
+                        <li><strong>渐变回退</strong>：视频加载失败时自动回退到CSS渐变背景</li>
+                    </ul>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">6.2 粒子效果</h4>
+                    <ul class="feature-list">
+                        <li><strong>动画粒子</strong>：页面背景具有动态粒子效果</li>
+                        <li><strong>主题适配</strong>：粒子颜色随主题变化</li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">7. 个人资料页面</h3>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">7.1 关于我</h4>
+                    <ul class="feature-list">
+                        <li><strong>个人信息</strong>：显示名称、头像、背景图</li>
+                        <li><strong>个人简介</strong>：展示个人介绍内容</li>
+                        <li><strong>兴趣爱好</strong>：展示兴趣爱好</li>
+                        <li><strong>动漫偏好</strong>：展示动漫品味</li>
+                    </ul>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">7.2 资料编辑（管理员）</h4>
+                    <ul class="feature-list">
+                        <li><strong>在线编辑</strong>：支持在线编辑个人资料</li>
+                        <li><strong>实时预览</strong>：编辑时实时预览效果</li>
+                        <li><strong>数据同步</strong>：修改后自动同步到数据库和Redis缓存</li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">8. 版本日志系统</h3>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">8.1 版本展示</h4>
+                    <ul class="feature-list">
+                        <li><strong>时间线视图</strong>：以时间线形式展示版本更新历史</li>
+                        <li><strong>版本详情</strong>：显示每个版本的更新内容</li>
+                        <li><strong>发布日期</strong>：显示每个版本的发布日期</li>
+                    </ul>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">8.2 版本管理（管理员）</h4>
+                    <ul class="feature-list">
+                        <li><strong>添加版本</strong>：支持添加新版本日志</li>
+                        <li><strong>编辑版本</strong>：支持编辑版本信息</li>
+                        <li><strong>删除版本</strong>：支持删除版本记录</li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">9. 标签管理（管理员）</h3>
+                    <ul class="feature-list">
+                        <li><strong>标签列表</strong>：查看所有标签</li>
+                        <li><strong>删除标签</strong>：支持删除不需要的标签</li>
+                        <li><strong>标签统计</strong>：显示标签使用情况</li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">10. 管理员后台</h3>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">10.1 登录系统</h4>
+                    <ul class="feature-list">
+                        <li><strong>用户认证</strong>：基于JWT Token的认证机制</li>
+                        <li><strong>Token存储</strong>：Token存储在Redis中，有效期6小时</li>
+                        <li><strong>安全退出</strong>：支持安全退出登录</li>
+                    </ul>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">10.2 管理功能</h4>
+                    <ul class="feature-list">
+                        <li><strong>文章管理</strong>：创建新文章、编辑已有文章、删除文章、文章列表查看</li>
+                        <li><strong>音乐管理</strong>：音乐上传、删除</li>
+                        <li><strong>版本管理</strong>：版本日志的增删改</li>
+                        <li><strong>标签管理</strong>：标签的查看和删除</li>
+                        <li><strong>个人资料编辑</strong>：编辑个人资料信息</li>
+                    </ul>
+
+                    <h4 style="color: #764ba2; margin: 20px 0 10px 0;">10.3 文章编辑器</h4>
+                    <ul class="feature-list">
+                        <li><strong>分屏编辑</strong>：左侧编辑Markdown，右侧实时预览</li>
+                        <li><strong>编辑模式</strong>：支持纯编辑、纯预览、分屏三种模式</li>
+                        <li><strong>HTML支持</strong>：支持在Markdown中嵌入HTML代码</li>
+                        <li><strong>代码高亮</strong>：代码块自动语法高亮</li>
+                        <li><strong>图片上传</strong>：支持上传图片并插入到文章</li>
+                        <li><strong>格式化工具</strong>：提供Markdown格式化快捷按钮</li>
+                        <li><strong>全屏编辑</strong>：编辑区域占据大部分屏幕空间</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">🎨 界面特性</h2>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">响应式设计</h3>
+                    <ul class="feature-list">
+                        <li><strong>移动端适配</strong>：完美适配手机、平板、电脑等设备</li>
+                        <li><strong>自适应布局</strong>：根据屏幕大小自动调整布局</li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">动画效果</h3>
+                    <ul class="feature-list">
+                        <li><strong>页面过渡</strong>：页面切换具有流畅的动画效果</li>
+                        <li><strong>悬停效果</strong>：按钮和卡片具有悬停动画</li>
+                        <li><strong>加载动画</strong>：数据加载时显示加载动画</li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">用户体验</h3>
+                    <ul class="feature-list">
+                        <li><strong>快速响应</strong>：使用Redis缓存提升响应速度</li>
+                        <li><strong>错误处理</strong>：友好的错误提示信息</li>
+                        <li><strong>加载状态</strong>：清晰的加载状态提示</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">🔍 搜索功能</h2>
+                <div class="subsection">
+                    <h3 class="subsection-title">Elasticsearch集成</h3>
+                    <ul class="feature-list">
+                        <li><strong>全文搜索</strong>：基于Elasticsearch的全文搜索</li>
+                        <li><strong>搜索日志</strong>：记录搜索关键词（可选）</li>
+                        <li><strong>搜索结果高亮</strong>：搜索结果关键词高亮显示</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">📱 页面导航</h2>
+                <div class="subsection">
+                    <h3 class="subsection-title">主要页面</h3>
+                    <ul class="feature-list">
+                        <li><strong>首页（Home）</strong>：博客文章列表、词云、搜索</li>
+                        <li><strong>关于（About）</strong>：个人资料展示</li>
+                        <li><strong>时间线（Timeline）</strong>：版本更新历史</li>
+                        <li><strong>文章详情</strong>：文章完整内容、评论</li>
+                        <li><strong>管理员后台</strong>：文章、音乐、版本、标签管理</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">🛠️ 技术亮点</h2>
+                <div class="tech-grid">
+                    <div class="tech-item">前后端分离</div>
+                    <div class="tech-item">React前端 + Spring Boot后端</div>
+                    <div class="tech-item">实时预览</div>
+                    <div class="tech-item">代码高亮</div>
+                    <div class="tech-item">主题系统</div>
+                    <div class="tech-item">Redis缓存优化</div>
+                    <div class="tech-item">文件存储</div>
+                    <div class="tech-item">DeepSeek AI集成</div>
+                    <div class="tech-item">Elasticsearch搜索</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">📝 使用说明</h2>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">普通用户</h3>
+                    <ul class="feature-list">
+                        <li>浏览文章：在首页浏览所有文章</li>
+                        <li>搜索文章：使用搜索框搜索关键词</li>
+                        <li>筛选文章：点击标签或分类筛选</li>
+                        <li>查看详情：点击文章卡片查看完整内容</li>
+                        <li>互动评论：在文章详情页发表评论和回复</li>
+                        <li>点赞文章：点击点赞按钮为文章点赞</li>
+                        <li>播放音乐：使用底部音乐播放器播放音乐</li>
+                        <li>AI聊天：点击AI助手图标打开聊天窗口</li>
+                        <li>切换主题：点击主题切换按钮切换明暗模式</li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">管理员</h3>
+                    <ul class="feature-list">
+                        <li>登录系统：使用管理员账号登录</li>
+                        <li>管理文章：在后台创建、编辑、删除文章</li>
+                        <li>管理音乐：上传、删除音乐文件</li>
+                        <li>管理版本：添加、编辑、删除版本日志</li>
+                        <li>管理标签：查看和删除标签</li>
+                        <li>编辑资料：编辑个人资料信息</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <h3 style="color: #667eea; margin-bottom: 15px; font-size: 1.5em;">🎯 特色功能</h3>
+                <ul class="feature-list">
+                    <li><strong>AI聊天助手</strong>：智能对话，帮助用户了解网站</li>
+                    <li><strong>音乐播放器</strong>：背景音乐播放，提升用户体验</li>
+                    <li><strong>词云可视化</strong>：直观展示热门标签</li>
+                    <li><strong>实时预览</strong>：Markdown编辑器实时预览</li>
+                    <li><strong>代码高亮</strong>：代码块语法高亮显示</li>
+                    <li><strong>主题切换</strong>：明暗主题自动/手动切换</li>
+                    <li><strong>多级评论</strong>：支持评论和回复的嵌套结构</li>
+                    <li><strong>文件管理</strong>：音乐文件存储在文件系统，便于管理</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">📞 技术支持</h2>
+                <p style="color: #555; font-size: 1.1em; line-height: 1.8;">如有问题或建议，请联系开发者。</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p style="font-size: 1.1em; font-weight: 600;">© 2026 My World generated by PY.</p>
+            <p style="margin-top: 10px;">感谢您的使用与支持</p>
+        </div>
+    </div>
+</body>
+</html>

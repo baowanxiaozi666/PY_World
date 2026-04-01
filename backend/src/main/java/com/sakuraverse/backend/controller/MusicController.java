@@ -8,10 +8,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -27,30 +33,57 @@ public class MusicController {
         return Result.success(musicService.getAllMusic());
     }
     
-    // Public: Stream Music from DB with Range Support (Critical for Seeking & Safari)
+    // Public: Stream Music from File System with Range Support (Critical for Seeking & Safari)
     @GetMapping("/music/stream/{id}")
     public void streamMusic(@PathVariable Long id, 
                           @RequestHeader(value = "Range", required = false) String rangeHeader,
                           HttpServletResponse response) {
         MusicTrack track = musicService.getMusicContent(id);
-        if (track == null || track.getFileData() == null) {
+        if (track == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
 
-        byte[] data = track.getFileData();
-        int totalLength = data.length;
+        // Get file path from track
+        String filePath = track.getUrl();
+        if (filePath == null || filePath.isEmpty()) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        
+        // Convert relative path (./Music/xxx.mp3) to absolute path
+        String projectRoot = System.getProperty("user.dir");
+        String fullPath;
+        if (filePath.startsWith("./Music/")) {
+            fullPath = projectRoot + File.separator + filePath.substring(2); // Remove "./" prefix
+        } else if (filePath.startsWith("Music/")) {
+            fullPath = projectRoot + File.separator + filePath;
+        } else {
+            // Legacy: if it's an external URL or old format, try to handle
+            // For now, assume it's a file path
+            fullPath = projectRoot + File.separator + filePath;
+        }
+        
+        Path path = Paths.get(fullPath);
+        File file = path.toFile();
+        
+        if (!file.exists() || !file.isFile()) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        
+        long totalLength = file.length();
         
         // Calculate Range
-        int start = 0;
-        int end = totalLength - 1;
+        long start = 0;
+        long end = totalLength - 1;
         
         if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
             String[] ranges = rangeHeader.substring(6).split("-");
             try {
-                start = Integer.parseInt(ranges[0]);
+                start = Long.parseLong(ranges[0]);
                 if (ranges.length > 1 && !ranges[1].isEmpty()) {
-                    end = Integer.parseInt(ranges[1]);
+                    end = Long.parseLong(ranges[1]);
                 }
             } catch (NumberFormatException e) {
                 // Ignore invalid range, default to full content
@@ -60,10 +93,10 @@ public class MusicController {
         // Bounds check
         if (start < 0) start = 0;
         if (end >= totalLength) end = totalLength - 1;
-        int contentLength = end - start + 1;
+        long contentLength = end - start + 1;
 
         // Set Headers
-        response.setContentType(track.getContentType());
+        response.setContentType(track.getContentType() != null ? track.getContentType() : "audio/mpeg");
         response.setHeader("Accept-Ranges", "bytes");
         // Inline disposition lets the browser play it; Attachment forces download
         try {
@@ -73,19 +106,37 @@ public class MusicController {
             // Fallback
         }
 
-        try (OutputStream os = response.getOutputStream()) {
+        try (InputStream is = new FileInputStream(file);
+             OutputStream os = response.getOutputStream()) {
+            
+            // Skip to start position
+            if (start > 0) {
+                is.skip(start);
+            }
+            
             if (rangeHeader != null) {
                 // Partial Content for Seeking
                 response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
                 response.setHeader("Content-Range", String.format("bytes %d-%d/%d", start, end, totalLength));
-                response.setContentLength(contentLength);
-                os.write(data, start, contentLength);
+                response.setContentLengthLong(contentLength);
             } else {
                 // Full Content
                 response.setStatus(HttpServletResponse.SC_OK);
-                response.setContentLength(totalLength);
-                os.write(data);
+                response.setContentLengthLong(totalLength);
             }
+            
+            // Stream file content
+            byte[] buffer = new byte[8192];
+            long remaining = contentLength;
+            while (remaining > 0) {
+                int bytesRead = is.read(buffer, 0, (int) Math.min(buffer.length, remaining));
+                if (bytesRead == -1) {
+                    break;
+                }
+                os.write(buffer, 0, bytesRead);
+                remaining -= bytesRead;
+            }
+            
             response.flushBuffer();
         } catch (IOException e) {
             // Client aborted connection (common during streaming/seeking)

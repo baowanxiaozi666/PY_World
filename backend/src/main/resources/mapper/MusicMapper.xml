@@ -24,13 +24,14 @@
         ORDER BY create_time DESC
     </select>
 
-    <select id="selectById" resultMap="MusicDetailMap">
-        SELECT * FROM blog_music WHERE id = #{id}
+    <select id="selectById" resultMap="MusicResultMap">
+        SELECT id, title, artist, url, cover_url, content_type, create_time 
+        FROM blog_music WHERE id = #{id}
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO blog_music (title, artist, url, content_type, file_data, cover_url, create_time)
-        VALUES (#{title}, #{artist}, #{url}, #{contentType}, #{fileData}, #{coverUrl}, NOW())
+        INSERT INTO blog_music (title, artist, url, content_type, cover_url, create_time)
+        VALUES (#{title}, #{artist}, #{url}, #{contentType}, #{coverUrl}, NOW())
     </insert>
 
     <delete id="delete">

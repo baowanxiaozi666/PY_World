@@ -818,7 +818,7 @@ const App: React.FC = () => {
           {renderContent()}
         </main>
 
-        <Footer />
+        {activePage !== Page.CREATE_POST && activePage !== Page.EDIT_POST && <Footer />}
       </div>
       
       <MusicPlayer />

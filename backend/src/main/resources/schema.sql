@@ -35,7 +35,7 @@ CREATE TABLE `blog_post` (
   `title` varchar(255) NOT NULL,
   `excerpt` varchar(512) DEFAULT NULL,
   `content` longtext,
-  `cover_image` varchar(255) DEFAULT NULL,
+  `cover_image` VARCHAR(1000) DEFAULT NULL,
   `likes` int DEFAULT '0',
   `views` int DEFAULT '0',
   `create_time` datetime DEFAULT NULL,

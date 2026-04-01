@@ -358,7 +358,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
         </h2>
       </div>
 
-      <div className="bg-anime-card backdrop-blur-md rounded-3xl p-3 border border-anime-accent/20 shadow-xl flex-1 overflow-hidden flex flex-col">
+      <div className="bg-anime-card backdrop-blur-md rounded-3xl p-3 border border-anime-accent/20 shadow-xl flex-1 overflow-visible flex flex-col">
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden min-h-0">
           <div className="space-y-2 shrink-0" style={{ flexShrink: 0 }}>
             {/* Title */}
@@ -1118,7 +1118,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end pt-4 border-t border-anime-text/10">
+          <div className="flex justify-end pt-4 border-t border-anime-text/10 shrink-0">
              <button 
                type="button"
                onClick={onCancel}

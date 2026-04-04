@@ -35,7 +35,8 @@ public class WebLogAspect {
         }
 
         Object result = joinPoint.proceed();
-        
+
+        log.info("Response : {}", result);
         log.info("Time Taken : {} ms", System.currentTimeMillis() - startTime);
         return result;
     }

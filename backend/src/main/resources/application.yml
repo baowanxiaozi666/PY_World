@@ -5,8 +5,8 @@ spring:
   datasource:
     # Matches docker-compose service
     url: jdbc:mysql://localhost:3306/pangyan_world?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
-    username: pangyan
-    password: pangyan
+    username: root
+    password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
   
 #  sql:
@@ -34,7 +34,7 @@ deepseek:
   api:
     # 替换为你的 DeepSeek API Key，或在环境变量中设置 DEEPSEEK_API_KEY
     # 从环境变量读取，如果没有则使用默认值（请替换为你的真实 API Key）
-    key: ${DEEPSEEK_API_KEY:sk-e10d9e3f4e6141be8f77c076c6b72514}
+    key: ${DEEPSEEK_API_KEY:}
     url: https://api.deepseek.com/chat/completions
     model: deepseek-chat
     timeout: 60
@@ -43,7 +43,7 @@ deepseek:
 weather:
   api:
     # Get your free API key from https://openweathermap.org/api
-    key: ${WEATHER_API_KEY:cdbd5cbe4d0a808c16be03668679c751}
+    key: ${WEATHER_API_KEY:}
     url: https://api.openweathermap.org/data/2.5/weather 
 
 mybatis:
@@ -53,5 +53,12 @@ mybatis:
     map-underscore-to-camel-case: true
 
 logging:
+  file:
+    name: /www/wwwroot/Projects/World/logs/backend.log
+  logback:
+    rollingpolicy:
+      max-file-size: 500MB
+      max-history: 7
   level:
     com.sakuraverse.backend.mapper: debug
+    com.sakuraverse.backend: info

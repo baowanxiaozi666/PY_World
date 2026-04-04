@@ -23,9 +23,13 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.ArrayList;
 
+import org.slf4j.LoggerFactory;
+
 @RestController
 @RequestMapping("/api")
 public class BlogController {
+
+    private static final org.slf4j.Logger visitorLog = LoggerFactory.getLogger("VISITOR");
 
     @Autowired
     private BlogService blogService;
@@ -97,6 +101,20 @@ public class BlogController {
             new Thread(() -> {
                 String region = resolveRegion(isLocalhost(finalIp) ? "" : finalIp);
                 redisTemplate.opsForValue().increment("region:views:" + region);
+                try {
+                    org.springframework.web.client.RestTemplate rt = new org.springframework.web.client.RestTemplate();
+                    String url = (isLocalhost(finalIp))
+                        ? "http://ip-api.com/json/?lang=zh-CN&fields=status,regionName,city,lat,lon"
+                        : "http://ip-api.com/json/" + finalIp + "?lang=zh-CN&fields=status,regionName,city,lat,lon";
+                    java.util.Map<String, Object> d = rt.getForObject(url, java.util.Map.class);
+                    if (d != null && "success".equals(d.get("status"))) {
+                        visitorLog.info("IP={} city={} region={} lat={} lon={}", finalIp, d.get("city"), d.get("regionName"), d.get("lat"), d.get("lon"));
+                    } else {
+                        visitorLog.info("IP={} region={}", finalIp, region);
+                    }
+                } catch (Exception e) {
+                    visitorLog.info("IP={} region={}", finalIp, region);
+                }
             }).start();
         }
         return Result.success();

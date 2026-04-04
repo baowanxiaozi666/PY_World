@@ -45,7 +45,8 @@ public class WeatherController {
             return Result.success((Map<String, Object>) cached);
         }
 
-        String city = "Beijing";
+        String city = "北京";
+        String weatherQueryParam = "q=Beijing";
 
         try {
             // Skip IP lookup for localhost
@@ -55,11 +56,14 @@ public class WeatherController {
 
                 if (ipData != null && "success".equals(ipData.get("status"))) {
                     city = (String) ipData.get("city");
+                    Double lat = (Double) ipData.get("lat");
+                    Double lon = (Double) ipData.get("lon");
+                    weatherQueryParam = "lat=" + lat + "&lon=" + lon;
                 }
             }
 
-            // Get weather data
-            String weatherUrl = apiUrl + "?q=" + city + "&appid=" + apiKey + "&units=metric&lang=zh_cn";
+            // Get weather data using lat/lon to avoid Chinese city name issues
+            String weatherUrl = apiUrl + "?" + weatherQueryParam + "&appid=" + apiKey + "&units=metric&lang=zh_cn";
             Map<String, Object> response = restTemplate.getForObject(weatherUrl, Map.class);
 
             if (response != null && response.containsKey("main")) {

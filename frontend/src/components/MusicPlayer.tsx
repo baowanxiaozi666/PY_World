@@ -41,7 +41,7 @@ const MusicPlayer: React.FC = () => {
                       // 只有当播放列表真正改变时才更新（比较ID数组）
                       setPlaylist(prev => {
                           const prevIds = prev.map(t => t.id).sort().join(',');
-                          const newIds = validMusic.map(t => t.id).sort().join(',');
+                          const newIds = validMusic.map((t: MusicTrack) => t.id).sort().join(',');
                           if (prevIds === newIds && prev.length === validMusic.length) {
                               // 数据相同，不更新状态，避免触发重新加载
                               // 但需要更新 ref 中的内容（可能对象属性有变化）

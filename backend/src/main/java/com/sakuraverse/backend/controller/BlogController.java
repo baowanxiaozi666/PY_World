@@ -95,7 +95,7 @@ public class BlogController {
         if (Boolean.TRUE.equals(isNew)) {
             final String finalIp = ip;
             new Thread(() -> {
-                String region = isLocalhost(finalIp) ? "本地" : resolveRegion(finalIp);
+                String region = resolveRegion(isLocalhost(finalIp) ? "" : finalIp);
                 redisTemplate.opsForValue().increment("region:views:" + region);
             }).start();
         }
@@ -105,8 +105,11 @@ public class BlogController {
     private String resolveRegion(String ip) {
         try {
             org.springframework.web.client.RestTemplate rt = new org.springframework.web.client.RestTemplate();
-            java.util.Map<String, Object> ipData = rt.getForObject(
-                "http://ip-api.com/json/" + ip + "?lang=zh-CN&fields=status,regionName,country", java.util.Map.class);
+            // Empty ip = query server's own public IP
+            String url = (ip == null || ip.isEmpty())
+                ? "http://ip-api.com/json/?lang=zh-CN&fields=status,regionName,country"
+                : "http://ip-api.com/json/" + ip + "?lang=zh-CN&fields=status,regionName,country";
+            java.util.Map<String, Object> ipData = rt.getForObject(url, java.util.Map.class);
             if (ipData != null && "success".equals(ipData.get("status"))) {
                 String r = (String) ipData.get("regionName");
                 return (r != null && !r.isEmpty()) ? r : (String) ipData.get("country");

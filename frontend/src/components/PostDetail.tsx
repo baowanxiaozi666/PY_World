@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BlogPost, Comment } from '../types';
-import { Clock, Tag, ArrowLeft, Heart, Send, User, Edit, Trash2, Reply, ChevronDown, ChevronUp } from 'lucide-react';
+import { Clock, Tag, ArrowLeft, Heart, Send, User, Edit, Trash2, Reply, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -497,16 +497,28 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onUpdatePost, onE
         </div>
       </div>
       
-      <div className="px-6 py-8 md:px-12 md:py-12 max-w-4xl mx-auto">
+      <div className="px-6 py-8 md:px-12 md:py-12 max-w-6xl mx-auto">
           <div className="flex flex-wrap items-center gap-6 mb-8 text-sm text-anime-text/70 border-b border-anime-text/10 pb-6">
             <div className="flex items-center gap-2">
               <Clock size={16} className="text-anime-accent" />
               {post.date}
             </div>
+            {post.updateTime && post.updateTime !== post.date && (
+              <div className="flex items-center gap-2">
+                <Clock size={16} className="text-anime-secondary" />
+                更新 {post.updateTime}
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Tag size={16} className="text-anime-secondary" />
               {post.category}
             </div>
+            {post.views !== undefined && (
+              <div className="flex items-center gap-2">
+                <Eye size={16} />
+                {post.views} 次阅读
+              </div>
+            )}
             <div className="ml-auto flex items-center gap-2">
                <button 
                  onClick={handleLike}

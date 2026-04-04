@@ -14,10 +14,12 @@ export interface BlogPost {
   excerpt: string;
   content: string;
   date: string;
-  category: string; // Primary category
+  updateTime?: string;
+  category: string;
   imageUrl: string;
-  tags: string[]; // Related tags
+  tags: string[];
   likes: number;
+  views?: number;
   comments: Comment[];
 }
 

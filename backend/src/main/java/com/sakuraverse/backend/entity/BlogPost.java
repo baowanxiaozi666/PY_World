@@ -22,6 +22,9 @@ public class BlogPost implements Serializable {
     
     private Integer views;
 
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "Asia/Shanghai")
+    private Date updateTime;
+
     // Changed from createTime to match Frontend 'date' and format as string
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "Asia/Shanghai")
     private Date date;

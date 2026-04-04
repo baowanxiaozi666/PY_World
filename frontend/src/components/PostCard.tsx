@@ -1,6 +1,6 @@
 import React from 'react';
 import { BlogPost } from '../types';
-import { Calendar, ArrowRight, Heart, MessageSquare, Edit, Trash2 } from 'lucide-react';
+import { Calendar, ArrowRight, Heart, MessageSquare, Edit, Trash2, Eye } from 'lucide-react';
 
 interface PostCardProps {
   post: BlogPost;
@@ -64,6 +64,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, isLoggedIn, onEdit, 
         <div className="flex items-center gap-2 text-xs text-anime-text/60 mb-2">
           <Calendar size={12} />
           <span>{post.date}</span>
+          {post.updateTime && post.updateTime !== post.date && (
+            <span className="text-anime-accent/70">· 更新 {post.updateTime}</span>
+          )}
         </div>
         
         <h3 className="text-xl font-bold text-anime-text mb-3 line-clamp-2 group-hover:text-anime-accent transition-colors">
@@ -82,6 +85,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, isLoggedIn, onEdit, 
             <span className="flex items-center gap-1 text-xs text-anime-text/60">
                 <MessageSquare size={12} className="text-anime-secondary" /> {post.comments.length}
             </span>
+            {post.views !== undefined && (
+              <span className="flex items-center gap-1 text-xs text-anime-text/60">
+                <Eye size={12} /> {post.views}
+              </span>
+            )}
           </div>
           <button className="text-anime-accent hover:translate-x-1 transition-transform">
             <ArrowRight size={20} />

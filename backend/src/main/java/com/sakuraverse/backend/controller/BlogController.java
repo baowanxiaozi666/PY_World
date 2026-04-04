@@ -10,6 +10,7 @@ import com.sakuraverse.backend.entity.Comment;
 import com.sakuraverse.backend.service.AIService;
 import com.sakuraverse.backend.service.AuthService;
 import com.sakuraverse.backend.service.BlogService;
+import com.sakuraverse.backend.mapper.RegionStatsMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
@@ -18,6 +19,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api")
@@ -31,6 +35,12 @@ public class BlogController {
     
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private RegionStatsMapper regionStatsMapper;
+
+    @Autowired
+    private org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate;
     
     // ==========================================
     // Public Endpoints (Business Logic)
@@ -49,6 +59,61 @@ public class BlogController {
     public Result<BlogPost> getPostDetail(@PathVariable Long id) {
         return Result.success(blogService.getPostDetail(id));
     }
+
+    @PostMapping("/posts/{id}/view")
+    public Result<Void> recordView(@PathVariable Long id) {
+        blogService.recordView(id);
+        return Result.success();
+    }
+
+    @GetMapping("/stats/regions")
+    public Result<java.util.List<java.util.Map<String, Object>>> getRegionStats() {
+        // Read from Redis for real-time data
+        Set<String> keys = redisTemplate.keys("region:views:*");
+        java.util.List<java.util.Map<String, Object>> result = new java.util.ArrayList<>();
+        if (keys != null) {
+            for (String key : keys) {
+                Object val = redisTemplate.opsForValue().get(key);
+                if (val != null) {
+                    java.util.Map<String, Object> row = new HashMap<>();
+                    row.put("region", key.replace("region:views:", ""));
+                    row.put("views", Long.parseLong(val.toString()));
+                    result.add(row);
+                }
+            }
+        }
+        result.sort((a, b) -> Long.compare((Long) b.get("views"), (Long) a.get("views")));
+        return Result.success(result.size() > 10 ? result.subList(0, 10) : result);
+    }
+
+    @PostMapping("/stats/visit")
+    public Result<Void> recordVisit(HttpServletRequest request) {
+        String ip = getClientIP(request);
+        // Deduplicate: same IP only counts once per minute
+        String dedupKey = "visit:dedup:" + ip;
+        Boolean isNew = redisTemplate.opsForValue().setIfAbsent(dedupKey, 1, 1, java.util.concurrent.TimeUnit.MINUTES);
+        if (Boolean.TRUE.equals(isNew)) {
+            final String finalIp = ip;
+            new Thread(() -> {
+                String region = isLocalhost(finalIp) ? "本地" : resolveRegion(finalIp);
+                redisTemplate.opsForValue().increment("region:views:" + region);
+            }).start();
+        }
+        return Result.success();
+    }
+
+    private String resolveRegion(String ip) {
+        try {
+            org.springframework.web.client.RestTemplate rt = new org.springframework.web.client.RestTemplate();
+            java.util.Map<String, Object> ipData = rt.getForObject(
+                "http://ip-api.com/json/" + ip + "?lang=zh-CN&fields=status,regionName,country", java.util.Map.class);
+            if (ipData != null && "success".equals(ipData.get("status"))) {
+                String r = (String) ipData.get("regionName");
+                return (r != null && !r.isEmpty()) ? r : (String) ipData.get("country");
+            }
+        } catch (Exception ignored) {}
+        return "未知";
+    }
     
     @GetMapping("/tags")
     public Result<List<String>> getAllTags() {
@@ -58,6 +123,15 @@ public class BlogController {
     @GetMapping("/search/cloud")
     public Result<List<Map<String, Object>>> getSearchCloud() {
         return Result.success(blogService.getSearchWordCloud());
+    }
+
+    @GetMapping("/stats")
+    public Result<Map<String, Object>> getSiteStats() {
+        Map<String, Object> stats = new HashMap<>();
+        Object redisViews = redisTemplate.opsForValue().get("site:views:total");
+        long total = redisViews != null ? Long.parseLong(redisViews.toString()) : blogService.getSiteViews();
+        stats.put("totalViews", total);
+        return Result.success(stats);
     }
 
     // Like, Comment, Chat are public actions
@@ -137,7 +211,11 @@ public class BlogController {
         }
         return ip != null ? ip : "unknown";
     }
-    
+
+    private boolean isLocalhost(String ip) {
+        return ip == null || "127.0.0.1".equals(ip) || "0:0:0:0:0:0:0:1".equals(ip) || "::1".equals(ip);
+    }
+
     /**
      * Get username from request - if user is logged in, return "The Developer", otherwise return null
      * @param request HTTP request

@@ -112,12 +112,23 @@ public class BlogServiceImpl implements BlogService {
 
         List<BlogPost> cachedPosts = (List<BlogPost>) redisTemplate.opsForValue().get(cacheKey);
         if (cachedPosts != null) {
+            cachedPosts.forEach(post -> {
+                Object redisViews = redisTemplate.opsForValue().get("post:views:" + post.getId());
+                if (redisViews != null) post.setViews(Integer.parseInt(redisViews.toString()));
+            });
             return cachedPosts;
         }
 
         List<BlogPost> dbPosts = blogMapper.selectPosts(tag, search, sort);
 
         if (dbPosts != null && !dbPosts.isEmpty()) {
+            // Overlay Redis view counts onto DB results
+            dbPosts.forEach(post -> {
+                Object redisViews = redisTemplate.opsForValue().get("post:views:" + post.getId());
+                if (redisViews != null) {
+                    post.setViews(Integer.parseInt(redisViews.toString()));
+                }
+            });
             redisTemplate.opsForValue().set(cacheKey, dbPosts, 1, TimeUnit.HOURS);
         }
 
@@ -247,26 +258,33 @@ public class BlogServiceImpl implements BlogService {
         String cacheKey = "post:detail:" + id;
         BlogPost cached = (BlogPost) redisTemplate.opsForValue().get(cacheKey);
         if (cached != null) {
-            // Recursively load replies for each comment (supports multi-level nesting)
+            // Sync latest views from Redis into cached object
+            Object redisViews = redisTemplate.opsForValue().get("post:views:" + id);
+            if (redisViews != null) {
+                cached.setViews(Integer.parseInt(redisViews.toString()));
+                redisTemplate.opsForValue().set(cacheKey, cached, 1, TimeUnit.HOURS);
+            }
             if (cached.getComments() != null) {
-                cached.getComments().forEach(comment -> {
-                    loadRepliesRecursively(comment);
-                });
+                cached.getComments().forEach(this::loadRepliesRecursively);
             }
             return cached;
         }
 
         BlogPost post = blogMapper.selectPostDetail(id);
         if (post != null) {
-            // Recursively load replies for each comment (supports multi-level nesting)
             if (post.getComments() != null) {
-                post.getComments().forEach(comment -> {
-                    loadRepliesRecursively(comment);
-                });
+                post.getComments().forEach(this::loadRepliesRecursively);
             }
             redisTemplate.opsForValue().set(cacheKey, post, 1, TimeUnit.HOURS);
         }
         return post;
+    }
+
+    @Override
+    public void recordView(Long id) {
+        String viewKey = "post:views:" + id;
+        redisTemplate.opsForValue().increment(viewKey);
+        redisTemplate.opsForValue().increment("site:views:total");
     }
 
     /**
@@ -646,5 +664,10 @@ public class BlogServiceImpl implements BlogService {
         
         // Clear caches
         clearCaches(null);
+    }
+
+    @Override
+    public long getSiteViews() {
+        return blogMapper.getSiteViews();
     }
 }

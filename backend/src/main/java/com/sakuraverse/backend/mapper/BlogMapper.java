@@ -52,4 +52,14 @@ public interface BlogMapper {
     void insertCategory(@Param("name") String name);
     
     void deleteTagByName(@Param("name") String name);
+
+    void incrementViews(@Param("id") Long id);
+
+    void setViews(@Param("id") Long id, @Param("views") int views);
+
+    long getSiteViews();
+
+    void incrementSiteViews();
+
+    void setSiteViews(@Param("total") long total);
 }

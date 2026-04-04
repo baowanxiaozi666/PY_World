@@ -17,6 +17,8 @@ import VersionTimeline from './components/VersionTimeline';
 import VersionManager from './components/VersionManager';
 import LatestUpdatesWidget from './components/LatestUpdatesWidget';
 import BackgroundVideo from './components/BackgroundVideo';
+import WeatherClock from './components/WeatherClock';
+import RegionChart from './components/RegionChart';
 import { Page, BlogPost, Theme, CloudKeyword, AboutProfile } from './types';
 import { BLOG_POSTS, INITIAL_TAGS, APP_NAME } from './constants';
 import { apiFetch } from './services/api';
@@ -43,6 +45,7 @@ const App: React.FC = () => {
     return getTimeBasedTheme();
   });
   const [cloudKeywords, setCloudKeywords] = useState<CloudKeyword[]>([]);
+  const [siteViews, setSiteViews] = useState<number>(0);
   
   // Profile Data (Default fallback)
   const [aboutProfile, setAboutProfile] = useState<AboutProfile>({
@@ -123,7 +126,12 @@ const App: React.FC = () => {
     fetchCloudData();
     fetchTags();
     fetchProfile();
-    fetchPosts(); // 初始化时从后端获取帖子列表
+    fetchPosts();
+    apiFetch<{totalViews: number}>('/stats').then(res => {
+      if (res.code === 200) setSiteViews(res.data.totalViews);
+    }).catch(() => {});
+    // Record visit once per mount (useRef prevents StrictMode double-call)
+    fetch('/api/stats/visit', { method: 'POST' }).catch(() => {});
   }, []);
 
   // Fetch Posts from Backend (handles Search AND Tag filtering)
@@ -235,7 +243,9 @@ const App: React.FC = () => {
   };
 
   const handlePostClick = async (post: BlogPost) => {
-    // Always fetch fresh post detail from backend to ensure comments and replies are loaded
+    // Record view once per click
+    fetch(`/api/posts/${post.id}/view`, { method: 'POST' }).catch(() => {});
+
     try {
       const response = await fetch(`/api/posts/${post.id}`);
       if (response.ok) {
@@ -521,8 +531,8 @@ const App: React.FC = () => {
           <>
             {/* Hero Section */}
             <div className={`relative rounded-3xl overflow-hidden mb-12 min-h-[300px] md:min-h-[400px] flex items-center justify-center shadow-2xl transition-all duration-700
-                ${isDark 
-                  ? 'bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 shadow-indigo-500/20' 
+                ${isDark
+                  ? 'bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 shadow-indigo-500/20'
                   : 'bg-gradient-to-b from-sky-400 via-sky-300 to-sky-100 shadow-sky-200/40'
                 }`}>
               
@@ -591,6 +601,11 @@ const App: React.FC = () => {
 
             <div className="flex flex-col md:flex-row gap-8">
               <div className="w-full md:w-1/4">
+                {/* Weather Clock Widget */}
+                <div className="mb-6">
+                  <WeatherClock />
+                </div>
+
                 <TagManager 
                   tags={tags}
                   selectedTag={selectedTag}
@@ -617,6 +632,16 @@ const App: React.FC = () => {
                 {/* Latest Updates Widget (Added here for Visibility) */}
                 <LatestUpdatesWidget onNavigate={() => handleNavigate(Page.CHANGELOG)} />
 
+                {/* Site Stats */}
+                {siteViews > 0 && (
+                  <div className="bg-anime-card backdrop-blur-sm rounded-2xl p-4 border border-anime-accent/20 mt-4 text-center">
+                    <p className="text-xs text-anime-text/60 mb-1">网站总访问量</p>
+                    <p className="text-2xl font-bold text-anime-accent">{siteViews.toLocaleString()}</p>
+                  </div>
+                )}
+
+                <RegionChart />
+
               </div>
 
               <div className="w-full md:w-3/4">
@@ -630,7 +655,7 @@ const App: React.FC = () => {
                  </div>
 
                  {posts.length > 0 ? (
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                      {posts.map((post) => (
                        <PostCard 
                          key={post.id} 
@@ -814,7 +839,7 @@ const App: React.FC = () => {
         />
         
         {/* Main content grows to fill available space */}
-        <main className="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
+        <main className="max-w-[1400px] mx-auto px-6 py-8 flex-grow w-full">
           {renderContent()}
         </main>
 

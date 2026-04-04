@@ -19,4 +19,6 @@ public interface BlogService {
     void savePost(BlogPost post);
     void deletePost(Long id);
     void deleteTag(String name);
+    long getSiteViews();
+    void recordView(Long id);
 }
